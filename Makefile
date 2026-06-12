@@ -1,4 +1,4 @@
-.PHONY: build test lint fmt lint-fix demo
+.PHONY: build test lint fmt lint-fix
 
 build:
 	go build -o bin/gendiff ./cmd/gendiff
