@@ -26,5 +26,13 @@ func NewCommand() *cli.Command {
 		OnUsageError: func(_ context.Context, _ *cli.Command, usageErr error, _ bool) error {
 			return cli.Exit(fmt.Errorf("%w: %s", errUsage, usageErr.Error()), exitUsage)
 		},
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "format",
+				Aliases: []string{"f"},
+				Value:   "stylish",
+				Usage:   "output format",
+			},
+		},
 	}
 }
