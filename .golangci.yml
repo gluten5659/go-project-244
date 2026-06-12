@@ -5,6 +5,11 @@ run:
 
 linters:
   default: all
+  disable:
+    - depguard
+    - exhaustruct
+    - wsl
+    - gomodguard
   settings:
     revive:
       rules:
