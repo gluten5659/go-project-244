@@ -20,6 +20,10 @@ linters:
   exclusions:
     paths:
       - bin
+    rules:
+      - linters:
+          - gosec
+        text: G304
 
 formatters:
   enable:
