@@ -1,8 +1,8 @@
 package cliapp
 
 import (
-	"code/internal/core"
 	"code/internal/files"
+	"code/internal/parser"
 	"context"
 	"errors"
 	"fmt"
@@ -80,7 +80,7 @@ func load(path string) (map[string]any, error) {
 		return nil, fmt.Errorf("%q: %w", path, err)
 	}
 
-	config, err := core.Parse(content)
+	config, err := parser.Parse(content)
 	if err != nil {
 		return nil, fmt.Errorf("%q: %w", path, err)
 	}
@@ -94,7 +94,7 @@ func exitCodeFor(err error) int {
 		return exitNoInput
 	case errors.Is(err, fs.ErrPermission):
 		return exitPermission
-	case errors.Is(err, core.ErrParse):
+	case errors.Is(err, parser.ErrParse):
 		return exitDataErr
 	case errors.Is(err, files.ErrRead):
 		return exitIOErr
