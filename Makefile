@@ -9,4 +9,5 @@ lint:
 fmt:
 	go tool golangci-lint fmt
 lint-fix:
+	go tool golangci-lint fmt
 	go tool golangci-lint run --fix
