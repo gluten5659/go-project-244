@@ -1,7 +1,9 @@
 package cliapp
 
 import (
+	"code/internal/compare"
 	"code/internal/files"
+	"code/internal/output"
 	"code/internal/parser"
 	"context"
 	"errors"
@@ -66,7 +68,9 @@ func run(cmd *cli.Command, firstFilePath, secondFilePath string) error {
 		return cli.Exit(err, exitCodeFor(err))
 	}
 
-	_, err = fmt.Fprintf(cmd.Writer, "%v\n%v\n", firstConfig, secondConfig)
+	diffs := compare.Compare(firstConfig, secondConfig)
+
+	_, err = fmt.Fprintln(cmd.Writer, output.FormatDiff(diffs))
 	if err != nil {
 		return cli.Exit(err, exitIOErr)
 	}
