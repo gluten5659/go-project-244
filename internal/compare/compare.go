@@ -43,18 +43,18 @@ func Compare(firstFile, secondFile map[string]any) []Diff {
 	keys = slices.Compact(keys)
 
 	for _, key := range keys {
-		firstFileValue, isKeyInMap := firstFile[key]
+		firstFileValue, isKeyInFirstFile := firstFile[key]
 
-		if !isKeyInMap {
-			diff = append(diff, Diff{Change: Added, Key: key, Value: firstFileValue})
+		if !isKeyInFirstFile {
+			diff = append(diff, Diff{Change: Added, Key: key, Value: secondFile[key]})
 
 			continue
 		}
 
-		secondFileValue, isKeyInMap := secondFile[key]
+		secondFileValue, isKeyInSecondFile := secondFile[key]
 
-		if !isKeyInMap {
-			diff = append(diff, Diff{Change: Deleted, Key: key, Value: secondFileValue})
+		if !isKeyInSecondFile {
+			diff = append(diff, Diff{Change: Deleted, Key: key, Value: firstFileValue})
 
 			continue
 		}
