@@ -14,7 +14,7 @@ func FormatDiff(diffs []compare.Diff) string {
 		fmt.Fprintf(&builder, "  %s\n", diff.String())
 	}
 
-	fmt.Fprintln(&builder, "}")
+	fmt.Fprint(&builder, "}")
 
 	return builder.String()
 }
