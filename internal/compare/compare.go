@@ -1,6 +1,7 @@
 package compare
 
 import (
+	"fmt"
 	"maps"
 	"slices"
 )
@@ -17,6 +18,21 @@ type Diff struct {
 	Change Changes
 	Key    string
 	Value  any
+}
+
+func (d Diff) String() string {
+	operation := "?"
+
+	switch d.Change {
+	case Added:
+		operation = "+"
+	case Deleted:
+		operation = "-"
+	case NoChanges:
+		operation = " "
+	}
+
+	return fmt.Sprintf("%s %s: %v", operation, d.Key, d.Value)
 }
 
 func Compare(firstFile, secondFile map[string]any) []Diff {
