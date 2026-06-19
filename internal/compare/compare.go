@@ -1,15 +1,15 @@
 package compare
 
 import (
-	"fmt"
 	"maps"
+	"reflect"
 	"slices"
 )
 
 type Changes int
 
 const (
-	NoChanges = iota
+	NoChanges Changes = iota
 	Added
 	Deleted
 )
@@ -18,21 +18,6 @@ type Diff struct {
 	Change Changes
 	Key    string
 	Value  any
-}
-
-func (d Diff) String() string {
-	operation := "?"
-
-	switch d.Change {
-	case Added:
-		operation = "+"
-	case Deleted:
-		operation = "-"
-	case NoChanges:
-		operation = " "
-	}
-
-	return fmt.Sprintf("%s %s: %v", operation, d.Key, d.Value)
 }
 
 func Compare(firstFile, secondFile map[string]any) []Diff {
@@ -59,7 +44,7 @@ func Compare(firstFile, secondFile map[string]any) []Diff {
 			continue
 		}
 
-		if firstFileValue != secondFileValue {
+		if !reflect.DeepEqual(firstFileValue, secondFileValue) {
 			diff = append(diff, Diff{Change: Deleted, Key: key, Value: firstFileValue})
 			diff = append(diff, Diff{Change: Added, Key: key, Value: secondFileValue})
 
