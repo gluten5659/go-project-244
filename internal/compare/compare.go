@@ -1,6 +1,7 @@
 package compare
 
 import (
+	"cmp"
 	"maps"
 	"reflect"
 	"slices"
@@ -23,11 +24,7 @@ type Diff struct {
 func Compare(firstFile, secondFile map[string]any) []Diff {
 	var diff []Diff
 
-	keys := append(slices.Collect(maps.Keys(firstFile)), slices.Collect(maps.Keys(secondFile))...)
-	slices.Sort(keys)
-	keys = slices.Compact(keys)
-
-	for _, key := range keys {
+	for _, key := range sortedKeys(firstFile, secondFile) {
 		firstFileValue, isKeyInFirstFile := firstFile[key]
 
 		if !isKeyInFirstFile {
@@ -55,4 +52,20 @@ func Compare(firstFile, secondFile map[string]any) []Diff {
 	}
 
 	return diff
+}
+
+func sortedKeys[Key cmp.Ordered, Value any](sources ...map[Key]Value) []Key {
+	capacity := 0
+	for _, source := range sources {
+		capacity += len(source)
+	}
+
+	keys := make([]Key, 0, capacity)
+	for _, source := range sources {
+		keys = append(keys, slices.Collect(maps.Keys(source))...)
+	}
+
+	slices.Sort(keys)
+
+	return slices.Compact(keys)
 }
