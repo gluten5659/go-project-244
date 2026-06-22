@@ -41,16 +41,16 @@ func Compare(firstFile, secondFile map[string]any) []Diff {
 			continue
 		}
 
-		typeOfFirstFileValue := reflect.ValueOf(firstFileValue).Kind()
-		typeOfSecondFileValue := reflect.ValueOf(secondFileValue).Kind()
+		firstFileValueMap, isFirstValueMap := firstFile[key].(map[string]any)
+		secondFileValueMap, isSecondValueMap := secondFile[key].(map[string]any)
 
-		if typeOfFirstFileValue == reflect.Map && typeOfSecondFileValue == reflect.Map {
+		if isFirstValueMap && isSecondValueMap {
 			diff = append(
 				diff,
 				Diff{
 					Change: NoChanges,
 					Key:    key,
-					Value:  Compare(firstFile[key].(map[string]any), secondFile[key].(map[string]any)),
+					Value:  Compare(firstFileValueMap, secondFileValueMap),
 				},
 			)
 
