@@ -10,6 +10,12 @@ import (
 
 var ErrParse = errors.New("parse config")
 
+const (
+	TypeJSON = "json"
+	TypeYAML = "yaml"
+	TypeYML  = "yml"
+)
+
 func Parse(fileType string, content []byte) (map[string]any, error) {
 	var (
 		config map[string]any
@@ -17,10 +23,12 @@ func Parse(fileType string, content []byte) (map[string]any, error) {
 	)
 
 	switch fileType {
-	case "yaml", "yml":
+	case TypeYAML, TypeYML:
 		err = yaml.Unmarshal(content, &config)
-	case "json":
+	case TypeJSON:
 		err = json.Unmarshal(content, &config)
+	default:
+		return nil, fmt.Errorf("%w: unsupported file type %q", ErrParse, fileType)
 	}
 
 	if err != nil {

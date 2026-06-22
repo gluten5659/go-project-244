@@ -13,7 +13,13 @@ const configFileMode = 0o600
 func WriteTempFile(tb testing.TB, content string) string {
 	tb.Helper()
 
-	path := filepath.Join(tb.TempDir(), "config.json")
+	return WriteTempFileNamed(tb, "config.json", content)
+}
+
+func WriteTempFileNamed(tb testing.TB, name, content string) string {
+	tb.Helper()
+
+	path := filepath.Join(tb.TempDir(), name)
 
 	require.NoError(tb, os.WriteFile(path, []byte(content), configFileMode))
 
