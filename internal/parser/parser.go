@@ -18,15 +18,15 @@ const (
 
 func Parse(fileType string, content []byte) (map[string]any, error) {
 	var (
-		config map[string]any
+		parsedContent map[string]any
 		err    error
 	)
 
 	switch fileType {
 	case TypeYAML, TypeYML:
-		err = yaml.Unmarshal(content, &config)
+		err = yaml.Unmarshal(content, &parsedContent)
 	case TypeJSON:
-		err = json.Unmarshal(content, &config)
+		err = json.Unmarshal(content, &parsedContent)
 	default:
 		return nil, fmt.Errorf("%w: unsupported file type %q", ErrParse, fileType)
 	}
@@ -35,5 +35,5 @@ func Parse(fileType string, content []byte) (map[string]any, error) {
 		return nil, fmt.Errorf("%w: %w", ErrParse, err)
 	}
 
-	return config, nil
+	return parsedContent, nil
 }
