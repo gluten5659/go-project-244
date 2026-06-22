@@ -3,6 +3,7 @@ package cliapp
 import (
 	"code/internal/compare"
 	"code/internal/files"
+	"code/internal/loader"
 	"code/internal/output"
 	"code/internal/parser"
 	"context"
@@ -58,17 +59,17 @@ func NewCommand() *cli.Command {
 }
 
 func run(cmd *cli.Command, firstFilePath, secondFilePath string) error {
-	firstConfig, err := load(firstFilePath)
+	firstFile, err := loader.FromFile(firstFilePath)
 	if err != nil {
 		return cli.Exit(err, exitCodeFor(err))
 	}
 
-	secondConfig, err := load(secondFilePath)
+	secondFile, err := loader.FromFile(secondFilePath)
 	if err != nil {
 		return cli.Exit(err, exitCodeFor(err))
 	}
 
-	diffs := compare.Compare(firstConfig, secondConfig)
+	diffs := compare.Compare(firstFile, secondFile)
 
 	_, err = fmt.Fprintln(cmd.Writer, output.FormatDiff(diffs))
 	if err != nil {
@@ -76,20 +77,6 @@ func run(cmd *cli.Command, firstFilePath, secondFilePath string) error {
 	}
 
 	return nil
-}
-
-func load(path string) (map[string]any, error) {
-	fileType, content, err := files.Read(path)
-	if err != nil {
-		return nil, fmt.Errorf("%q: %w", path, err)
-	}
-
-	config, err := parser.Parse(fileType, content)
-	if err != nil {
-		return nil, fmt.Errorf("%q: %w", path, err)
-	}
-
-	return config, nil
 }
 
 func exitCodeFor(err error) int {
