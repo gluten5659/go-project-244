@@ -79,12 +79,12 @@ func run(cmd *cli.Command, firstFilePath, secondFilePath string) error {
 }
 
 func load(path string) (map[string]any, error) {
-	content, err := files.Read(path)
+	fileType, content, err := files.Read(path)
 	if err != nil {
 		return nil, fmt.Errorf("%q: %w", path, err)
 	}
 
-	config, err := parser.Parse(content)
+	config, err := parser.Parse(fileType, content)
 	if err != nil {
 		return nil, fmt.Errorf("%q: %w", path, err)
 	}
