@@ -35,49 +35,47 @@ func Compare(firstFile, secondFile map[string]any) []Diff {
 func compareKey(key string, firstFile, secondFile map[string]any) []Diff {
 	firstFileValue, isKeyInFirstFile := firstFile[key]
 	secondFileValue, isKeyInSecondFile := secondFile[key]
-	firstFileValueMap, isFirstValueMap := firstFile[key].(map[string]any)
-	secondFileValueMap, isSecondValueMap := secondFile[key].(map[string]any)
+
+	switch {
+	case !isKeyInFirstFile:
+		return []Diff{added(key, secondFileValue)}
+	case !isKeyInSecondFile:
+		return []Diff{deleted(key, firstFileValue)}
+	}
+
+	firstFileValueMap, isFirstValueMap := firstFileValue.(map[string]any)
+	secondFileValueMap, isSecondValueMap := secondFileValue.(map[string]any)
 
 	if isFirstValueMap && isSecondValueMap {
-		return []Diff{{
-			Change: NoChanges,
-			Key:    key,
-			Value:  Compare(firstFileValueMap, secondFileValueMap),
-		}}
+		return []Diff{unchanged(key, Compare(firstFileValueMap, secondFileValueMap))}
 	}
 
-	if isFirstValueMap {
-		return []Diff{{
-			Change: Deleted,
-			Key:    key,
-			Value:  Compare(firstFileValueMap, firstFileValueMap),
-		}}
+	if reflect.DeepEqual(firstFileValue, secondFileValue) {
+		return []Diff{unchanged(key, firstFileValue)}
 	}
 
-	if isSecondValueMap {
-		return []Diff{{
-			Change: Added,
-			Key:    key,
-			Value:  Compare(secondFileValueMap, secondFileValueMap),
-		}}
+	return []Diff{deleted(key, firstFileValue), added(key, secondFileValue)}
+}
+
+func added(key string, value any) Diff {
+	return Diff{Change: Added, Key: key, Value: expand(value)}
+}
+
+func deleted(key string, value any) Diff {
+	return Diff{Change: Deleted, Key: key, Value: expand(value)}
+}
+
+func unchanged(key string, value any) Diff {
+	return Diff{Change: NoChanges, Key: key, Value: value}
+}
+
+func expand(value any) any {
+	valueMap, isValueMap := value.(map[string]any)
+	if !isValueMap {
+		return value
 	}
 
-	if !isKeyInFirstFile {
-		return []Diff{{Change: Added, Key: key, Value: secondFile[key]}}
-	}
-
-	if !isKeyInSecondFile {
-		return []Diff{{Change: Deleted, Key: key, Value: firstFileValue}}
-	}
-
-	if !reflect.DeepEqual(firstFileValue, secondFileValue) {
-		return []Diff{
-			{Change: Deleted, Key: key, Value: firstFileValue},
-			{Change: Added, Key: key, Value: secondFileValue},
-		}
-	}
-
-	return []Diff{{Change: NoChanges, Key: key, Value: firstFileValue}}
+	return Compare(valueMap, valueMap)
 }
 
 func sortedKeys[Key cmp.Ordered, Value any](sources ...map[Key]Value) []Key {
