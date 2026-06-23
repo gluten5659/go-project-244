@@ -6,31 +6,30 @@ import (
 	"strings"
 )
 
+const indentUnit = "    "
+
 func FormatDiff(diffs []compare.Diff) string {
 	builder := strings.Builder{}
-	buildDiff(0, diffs, &builder)
+	writeBlock(&builder, diffs, 0)
 
-	return builder.String()
+	return strings.TrimRight(builder.String(), "\n")
 }
 
-func buildDiff(level int, diffs []compare.Diff, builder *strings.Builder) {
+func writeBlock(builder *strings.Builder, diffs []compare.Diff, level int) {
 	fmt.Fprintln(builder, "{")
 
+	entryIndent := strings.Repeat(indentUnit, level) + "  "
 	for _, diff := range diffs {
-		value, isSlice := diff.Value.([]compare.Diff)
-		if isSlice {
-			fmt.Fprint(builder, strings.Repeat("  ", level))
-			fmt.Fprintf(builder, "%s %s: ", operation(diff.Change), diff.Key)
+		fmt.Fprintf(builder, "%s%s %s: ", entryIndent, operation(diff.Change), diff.Key)
 
-			buildDiff(level+1, value, builder)
+		if children, isNested := diff.Value.([]compare.Diff); isNested {
+			writeBlock(builder, children, level+1)
 		} else {
-			fmt.Fprint(builder, strings.Repeat("  ", level))
-			fmt.Fprintf(builder, "%s %s: %v\n", operation(diff.Change), diff.Key, diff.Value)
+			fmt.Fprintln(builder, formatValue(diff.Value))
 		}
 	}
 
-	fmt.Fprint(builder, strings.Repeat("  ", level))
-	fmt.Fprintln(builder, "}")
+	fmt.Fprintf(builder, "%s}\n", strings.Repeat(indentUnit, level))
 }
 
 func operation(change compare.Changes) string {
@@ -44,4 +43,12 @@ func operation(change compare.Changes) string {
 	}
 
 	return " "
+}
+
+func formatValue(value any) string {
+	if value == nil {
+		return "null"
+	}
+
+	return fmt.Sprintf("%v", value)
 }

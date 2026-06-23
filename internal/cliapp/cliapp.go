@@ -71,7 +71,7 @@ func run(cmd *cli.Command, firstFilePath, secondFilePath string) error {
 
 	diffs := compare.Compare(firstFile, secondFile)
 
-	_, err = fmt.Fprint(cmd.Writer, output.FormatDiff(diffs))
+	_, err = fmt.Fprintln(cmd.Writer, output.FormatDiff(diffs))
 	if err != nil {
 		return cli.Exit(err, exitIOErr)
 	}
