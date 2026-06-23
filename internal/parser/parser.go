@@ -19,7 +19,7 @@ const (
 func Parse(fileType string, content []byte) (map[string]any, error) {
 	var (
 		parsedContent map[string]any
-		err    error
+		err           error
 	)
 
 	switch fileType {

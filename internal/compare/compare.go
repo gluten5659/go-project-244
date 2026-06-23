@@ -26,21 +26,7 @@ func Compare(firstFile, secondFile map[string]any) []Diff {
 
 	for _, key := range sortedKeys(firstFile, secondFile) {
 		firstFileValue, isKeyInFirstFile := firstFile[key]
-
-		if !isKeyInFirstFile {
-			diff = append(diff, Diff{Change: Added, Key: key, Value: secondFile[key]})
-
-			continue
-		}
-
 		secondFileValue, isKeyInSecondFile := secondFile[key]
-
-		if !isKeyInSecondFile {
-			diff = append(diff, Diff{Change: Deleted, Key: key, Value: firstFileValue})
-
-			continue
-		}
-
 		firstFileValueMap, isFirstValueMap := firstFile[key].(map[string]any)
 		secondFileValueMap, isSecondValueMap := secondFile[key].(map[string]any)
 
@@ -53,6 +39,44 @@ func Compare(firstFile, secondFile map[string]any) []Diff {
 					Value:  Compare(firstFileValueMap, secondFileValueMap),
 				},
 			)
+
+			continue
+		}
+
+		if isFirstValueMap {
+			diff = append(
+				diff,
+				Diff{
+					Change: Deleted,
+					Key:    key,
+					Value:  Compare(firstFileValueMap, firstFileValueMap),
+				},
+			)
+
+			continue
+		}
+
+		if isSecondValueMap {
+			diff = append(
+				diff,
+				Diff{
+					Change: Added,
+					Key:    key,
+					Value:  Compare(secondFileValueMap, secondFileValueMap),
+				},
+			)
+
+			continue
+		}
+
+		if !isKeyInFirstFile {
+			diff = append(diff, Diff{Change: Added, Key: key, Value: secondFile[key]})
+
+			continue
+		}
+
+		if !isKeyInSecondFile {
+			diff = append(diff, Diff{Change: Deleted, Key: key, Value: firstFileValue})
 
 			continue
 		}
