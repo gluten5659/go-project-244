@@ -8,11 +8,12 @@ import (
 )
 
 const (
-	keyHost    = "host"
-	keyTimeout = "timeout"
-	keyList    = "list"
-	keyNested  = "nested"
-	hostValue  = "hexlet.io"
+	keyHost     = "host"
+	keyTimeout  = "timeout"
+	keyList     = "list"
+	keyNested   = "nested"
+	hostValue   = "hexlet.io"
+	scalarValue = "str"
 )
 
 func TestCompare(t *testing.T) {
@@ -28,7 +29,7 @@ func TestCompare(t *testing.T) {
 			name:          "both files empty",
 			firstFile:     map[string]any{},
 			secondFile:    map[string]any{},
-			expectedDiffs: nil,
+			expectedDiffs: []compare.Diff{},
 		},
 		{
 			name:       "key only in first file is deleted with its value",
@@ -72,12 +73,58 @@ func TestCompare(t *testing.T) {
 			},
 		},
 		{
-			name:       "different nested values are deleted then added",
+			name:       "different nested values recurse into a child diff",
 			firstFile:  map[string]any{keyNested: map[string]any{"x": 1}},
 			secondFile: map[string]any{keyNested: map[string]any{"x": 2}},
 			expectedDiffs: []compare.Diff{
-				{Change: compare.Deleted, Key: keyNested, Value: map[string]any{"x": 1}},
-				{Change: compare.Added, Key: keyNested, Value: map[string]any{"x": 2}},
+				{Change: compare.NoChanges, Key: keyNested, Value: []compare.Diff{
+					{Change: compare.Deleted, Key: "x", Value: 1},
+					{Change: compare.Added, Key: "x", Value: 2},
+				}},
+			},
+		},
+		{
+			name:       "object only in first file is deleted as a nested tree",
+			firstFile:  map[string]any{keyNested: map[string]any{"x": 1}},
+			secondFile: map[string]any{},
+			expectedDiffs: []compare.Diff{
+				{Change: compare.Deleted, Key: keyNested, Value: []compare.Diff{
+					{Change: compare.NoChanges, Key: "x", Value: 1},
+				}},
+			},
+		},
+		{
+			name:       "value changed from object to scalar deletes the tree and adds the scalar",
+			firstFile:  map[string]any{keyNested: map[string]any{"x": 1}},
+			secondFile: map[string]any{keyNested: scalarValue},
+			expectedDiffs: []compare.Diff{
+				{Change: compare.Deleted, Key: keyNested, Value: []compare.Diff{
+					{Change: compare.NoChanges, Key: "x", Value: 1},
+				}},
+				{Change: compare.Added, Key: keyNested, Value: scalarValue},
+			},
+		},
+		{
+			name:       "value changed from scalar to object deletes the scalar and adds the tree",
+			firstFile:  map[string]any{keyNested: scalarValue},
+			secondFile: map[string]any{keyNested: map[string]any{"x": 1}},
+			expectedDiffs: []compare.Diff{
+				{Change: compare.Deleted, Key: keyNested, Value: scalarValue},
+				{Change: compare.Added, Key: keyNested, Value: []compare.Diff{
+					{Change: compare.NoChanges, Key: "x", Value: 1},
+				}},
+			},
+		},
+		{
+			name:       "object only in second file is added as a deeply nested tree",
+			firstFile:  map[string]any{},
+			secondFile: map[string]any{keyNested: map[string]any{"a": map[string]any{"b": 1}}},
+			expectedDiffs: []compare.Diff{
+				{Change: compare.Added, Key: keyNested, Value: []compare.Diff{
+					{Change: compare.NoChanges, Key: "a", Value: []compare.Diff{
+						{Change: compare.NoChanges, Key: "b", Value: 1},
+					}},
+				}},
 			},
 		},
 		{

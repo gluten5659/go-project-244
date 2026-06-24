@@ -22,35 +22,43 @@ func TestFormatDiff(t *testing.T) {
 			expectedOutput: "{\n}",
 		},
 		{
-			name: "added entry is prefixed with a plus",
-			diffs: []compare.Diff{
-				{Change: compare.Added, Key: "verbose", Value: true},
-			},
-			expectedOutput: "{\n  + verbose: true\n}",
-		},
-		{
-			name: "deleted entry is prefixed with a minus",
-			diffs: []compare.Diff{
-				{Change: compare.Deleted, Key: "proxy", Value: "123.234.53.22"},
-			},
-			expectedOutput: "{\n  - proxy: 123.234.53.22\n}",
-		},
-		{
-			name: "unchanged entry is prefixed with spaces",
-			diffs: []compare.Diff{
-				{Change: compare.NoChanges, Key: "host", Value: "hexlet.io"},
-			},
-			expectedOutput: "{\n    host: hexlet.io\n}",
-		},
-		{
-			name: "all change kinds render together in order",
+			name: "each change kind gets its marker at the root level",
 			diffs: []compare.Diff{
 				{Change: compare.Deleted, Key: "follow", Value: false},
 				{Change: compare.NoChanges, Key: "host", Value: "hexlet.io"},
-				{Change: compare.Deleted, Key: "timeout", Value: 50},
-				{Change: compare.Added, Key: "timeout", Value: 20},
+				{Change: compare.Added, Key: "verbose", Value: true},
 			},
-			expectedOutput: "{\n  - follow: false\n    host: hexlet.io\n  - timeout: 50\n  + timeout: 20\n}",
+			expectedOutput: "{\n" +
+				"  - follow: false\n" +
+				"    host: hexlet.io\n" +
+				"  + verbose: true\n" +
+				"}",
+		},
+		{
+			name: "nil value renders as null",
+			diffs: []compare.Diff{
+				{Change: compare.Added, Key: "setting3", Value: nil},
+			},
+			expectedOutput: "{\n  + setting3: null\n}",
+		},
+		{
+			name: "nested children indent by depth",
+			diffs: []compare.Diff{
+				{Change: compare.NoChanges, Key: "common", Value: []compare.Diff{
+					{Change: compare.Added, Key: "follow", Value: false},
+					{Change: compare.NoChanges, Key: "sub", Value: []compare.Diff{
+						{Change: compare.Deleted, Key: "x", Value: 1},
+					}},
+				}},
+			},
+			expectedOutput: "{\n" +
+				"    common: {\n" +
+				"      + follow: false\n" +
+				"        sub: {\n" +
+				"          - x: 1\n" +
+				"        }\n" +
+				"    }\n" +
+				"}",
 		},
 	}
 
