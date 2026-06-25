@@ -118,6 +118,39 @@ func TestCommandRendersNestedDiff(t *testing.T) {
 	assert.Equal(t, expected, output.String())
 }
 
+func TestCommandRendersPlainDiff(t *testing.T) {
+	t.Parallel()
+
+	output := strings.Builder{}
+	command := newTestCommand(t, &output)
+
+	arguments := []string{
+		commandName,
+		"--format",
+		"plain",
+		"testdata/nested1.json",
+		"testdata/nested2.json",
+	}
+
+	err := command.Run(t.Context(), arguments)
+
+	require.NoError(t, err)
+
+	expected := "Property 'common.follow' was added with value: false\n" +
+		"Property 'common.setting2' was removed\n" +
+		"Property 'common.setting3' was updated. From true to null\n" +
+		"Property 'common.setting4' was added with value: 'blah blah'\n" +
+		"Property 'common.setting5' was added with value: [complex value]\n" +
+		"Property 'common.setting6.doge.wow' was updated. From '' to 'so much'\n" +
+		"Property 'common.setting6.ops' was added with value: 'vops'\n" +
+		"Property 'group1.baz' was updated. From 'bas' to 'bars'\n" +
+		"Property 'group1.nest' was updated. From [complex value] to 'str'\n" +
+		"Property 'group2' was removed\n" +
+		"Property 'group3' was added with value: [complex value]\n"
+
+	assert.Equal(t, expected, output.String())
+}
+
 func TestCommandExitCodes(t *testing.T) {
 	t.Parallel()
 
@@ -126,6 +159,17 @@ func TestCommandExitCodes(t *testing.T) {
 		buildArguments   func(t testing.TB) []string
 		expectedExitCode int
 	}{
+		{
+			name: "unsupported format yields a usage error",
+			buildArguments: func(tb testing.TB) []string {
+				tb.Helper()
+
+				readable := testutil.WriteTempFile(tb, `{}`)
+
+				return []string{commandName, "--format", "bogus", readable, readable}
+			},
+			expectedExitCode: exitUsage,
+		},
 		{
 			name: "malformed json yields a data error",
 			buildArguments: func(tb testing.TB) []string {

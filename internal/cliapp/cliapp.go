@@ -26,7 +26,7 @@ const (
 )
 
 func NewCommand() *cli.Command {
-	var firstFilePath, secondFilePath string
+	var firstFilePath, secondFilePath, format string
 
 	return &cli.Command{
 		Name:  "gendiff",
@@ -36,10 +36,11 @@ func NewCommand() *cli.Command {
 		},
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:    "format",
-				Aliases: []string{"f"},
-				Value:   "stylish",
-				Usage:   "output format",
+				Name:        "format",
+				Aliases:     []string{"f"},
+				Value:       "stylish",
+				Usage:       "output format",
+				Destination: &format,
 			},
 		},
 		Arguments: []cli.Argument{
@@ -53,12 +54,12 @@ func NewCommand() *cli.Command {
 			},
 		},
 		Action: func(_ context.Context, cmd *cli.Command) error {
-			return run(cmd, firstFilePath, secondFilePath)
+			return run(cmd, firstFilePath, secondFilePath, format)
 		},
 	}
 }
 
-func run(cmd *cli.Command, firstFilePath, secondFilePath string) error {
+func run(cmd *cli.Command, firstFilePath, secondFilePath, format string) error {
 	firstFile, err := loader.FromFile(firstFilePath)
 	if err != nil {
 		return cli.Exit(err, exitCodeFor(err))
@@ -71,7 +72,12 @@ func run(cmd *cli.Command, firstFilePath, secondFilePath string) error {
 
 	diffs := compare.Compare(firstFile, secondFile)
 
-	_, err = fmt.Fprintln(cmd.Writer, output.FormatDiff(diffs))
+	formatted, err := output.FormatDiff(diffs, format)
+	if err != nil {
+		return cli.Exit(fmt.Errorf("%w: %s", errUsage, err.Error()), exitUsage)
+	}
+
+	_, err = fmt.Fprintln(cmd.Writer, formatted)
 	if err != nil {
 		return cli.Exit(err, exitIOErr)
 	}

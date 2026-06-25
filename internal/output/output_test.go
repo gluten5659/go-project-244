@@ -6,6 +6,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+const (
+	formatStylish = "stylish"
+	formatPlain   = "plain"
 )
 
 func TestFormatDiff(t *testing.T) {
@@ -13,16 +19,20 @@ func TestFormatDiff(t *testing.T) {
 
 	testCases := []struct {
 		name           string
+		format         string
 		diffs          []compare.Diff
 		expectedOutput string
+		expectError    bool
 	}{
 		{
-			name:           "empty diff renders empty braces",
+			name:           "stylish renders empty braces for an empty diff",
+			format:         formatStylish,
 			diffs:          nil,
 			expectedOutput: "{\n}",
 		},
 		{
-			name: "each change kind gets its marker at the root level",
+			name:   "stylish gives each change kind its marker at the root level",
+			format: formatStylish,
 			diffs: []compare.Diff{
 				{Change: compare.Deleted, Key: "follow", Value: false},
 				{Change: compare.NoChanges, Key: "host", Value: "hexlet.io"},
@@ -35,14 +45,14 @@ func TestFormatDiff(t *testing.T) {
 				"}",
 		},
 		{
-			name: "nil value renders as null",
-			diffs: []compare.Diff{
-				{Change: compare.Added, Key: "setting3", Value: nil},
-			},
+			name:           "stylish renders a nil value as null",
+			format:         formatStylish,
+			diffs:          []compare.Diff{{Change: compare.Added, Key: "setting3", Value: nil}},
 			expectedOutput: "{\n  + setting3: null\n}",
 		},
 		{
-			name: "nested children indent by depth",
+			name:   "stylish indents nested children by depth",
+			format: formatStylish,
 			diffs: []compare.Diff{
 				{Change: compare.NoChanges, Key: "common", Value: []compare.Diff{
 					{Change: compare.Added, Key: "follow", Value: false},
@@ -60,14 +70,76 @@ func TestFormatDiff(t *testing.T) {
 				"    }\n" +
 				"}",
 		},
+		{
+			name:   "plain reports added values with quoting rules",
+			format: formatPlain,
+			diffs: []compare.Diff{
+				{Change: compare.Added, Key: "flag", Value: false},
+				{Change: compare.Added, Key: "name", Value: "bob"},
+				{Change: compare.Added, Key: "opt", Value: nil},
+			},
+			expectedOutput: "Property 'flag' was added with value: false\n" +
+				"Property 'name' was added with value: 'bob'\n" +
+				"Property 'opt' was added with value: null",
+		},
+		{
+			name:           "plain reports a removed property",
+			format:         formatPlain,
+			diffs:          []compare.Diff{{Change: compare.Deleted, Key: "old", Value: 1}},
+			expectedOutput: "Property 'old' was removed",
+		},
+		{
+			name:   "plain joins a deleted and added pair into an update",
+			format: formatPlain,
+			diffs: []compare.Diff{
+				{Change: compare.Deleted, Key: "x", Value: 1},
+				{Change: compare.Added, Key: "x", Value: 2},
+			},
+			expectedOutput: "Property 'x' was updated. From 1 to 2",
+		},
+		{
+			name:   "plain renders nested values as a complex placeholder",
+			format: formatPlain,
+			diffs: []compare.Diff{
+				{Change: compare.Added, Key: "obj", Value: []compare.Diff{
+					{Change: compare.NoChanges, Key: "a", Value: 1},
+				}},
+			},
+			expectedOutput: "Property 'obj' was added with value: [complex value]",
+		},
+		{
+			name:   "plain dots the path and skips unchanged leaves",
+			format: formatPlain,
+			diffs: []compare.Diff{
+				{Change: compare.NoChanges, Key: "common", Value: []compare.Diff{
+					{Change: compare.NoChanges, Key: "keep", Value: "v"},
+					{Change: compare.Added, Key: "new", Value: true},
+				}},
+			},
+			expectedOutput: "Property 'common.new' was added with value: true",
+		},
+		{
+			name:        "unsupported format returns an error",
+			format:      "bogus",
+			diffs:       []compare.Diff{{Change: compare.Added, Key: "x", Value: 1}},
+			expectError: true,
+		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			formatted := output.FormatDiff(testCase.diffs)
+			formatted, err := output.FormatDiff(testCase.diffs, testCase.format)
 
+			if testCase.expectError {
+				require.Error(t, err)
+				assert.Empty(t, formatted)
+
+				return
+			}
+
+			require.NoError(t, err)
 			assert.Equal(t, testCase.expectedOutput, formatted)
 		})
 	}
