@@ -3,8 +3,8 @@ package cliapp
 import (
 	"code/internal/compare"
 	"code/internal/files"
+	"code/internal/formatters"
 	"code/internal/loader"
-	"code/internal/output"
 	"code/internal/parser"
 	"context"
 	"errors"
@@ -38,7 +38,7 @@ func NewCommand() *cli.Command {
 			&cli.StringFlag{
 				Name:        "format",
 				Aliases:     []string{"f"},
-				Value:       "stylish",
+				Value:       formatters.Stylish,
 				Usage:       "output format",
 				Destination: &format,
 			},
@@ -72,7 +72,7 @@ func run(cmd *cli.Command, firstFilePath, secondFilePath, format string) error {
 
 	diffs := compare.Compare(firstFile, secondFile)
 
-	formatted, err := output.FormatDiff(diffs, format)
+	formatted, err := formatters.Format(diffs, format)
 	if err != nil {
 		return cli.Exit(fmt.Errorf("%w: %s", errUsage, err.Error()), exitUsage)
 	}

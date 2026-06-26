@@ -1,20 +1,15 @@
-package output_test
+package formatters_test
 
 import (
 	"code/internal/compare"
-	"code/internal/output"
+	"code/internal/formatters"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	formatStylish = "stylish"
-	formatPlain   = "plain"
-)
-
-func TestFormatDiff(t *testing.T) {
+func TestFormat(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -26,13 +21,13 @@ func TestFormatDiff(t *testing.T) {
 	}{
 		{
 			name:           "stylish renders empty braces for an empty diff",
-			format:         formatStylish,
+			format:         formatters.Stylish,
 			diffs:          nil,
 			expectedOutput: "{\n}",
 		},
 		{
 			name:   "stylish gives each change kind its marker at the root level",
-			format: formatStylish,
+			format: formatters.Stylish,
 			diffs: []compare.Diff{
 				{Change: compare.Deleted, Key: "follow", Value: false},
 				{Change: compare.NoChanges, Key: "host", Value: "hexlet.io"},
@@ -46,13 +41,13 @@ func TestFormatDiff(t *testing.T) {
 		},
 		{
 			name:           "stylish renders a nil value as null",
-			format:         formatStylish,
+			format:         formatters.Stylish,
 			diffs:          []compare.Diff{{Change: compare.Added, Key: "setting3", Value: nil}},
 			expectedOutput: "{\n  + setting3: null\n}",
 		},
 		{
 			name:   "stylish indents nested children by depth",
-			format: formatStylish,
+			format: formatters.Stylish,
 			diffs: []compare.Diff{
 				{Change: compare.NoChanges, Key: "common", Value: []compare.Diff{
 					{Change: compare.Added, Key: "follow", Value: false},
@@ -72,7 +67,7 @@ func TestFormatDiff(t *testing.T) {
 		},
 		{
 			name:   "plain reports added values with quoting rules",
-			format: formatPlain,
+			format: formatters.Plain,
 			diffs: []compare.Diff{
 				{Change: compare.Added, Key: "flag", Value: false},
 				{Change: compare.Added, Key: "name", Value: "bob"},
@@ -84,13 +79,13 @@ func TestFormatDiff(t *testing.T) {
 		},
 		{
 			name:           "plain reports a removed property",
-			format:         formatPlain,
+			format:         formatters.Plain,
 			diffs:          []compare.Diff{{Change: compare.Deleted, Key: "old", Value: 1}},
 			expectedOutput: "Property 'old' was removed",
 		},
 		{
 			name:   "plain joins a deleted and added pair into an update",
-			format: formatPlain,
+			format: formatters.Plain,
 			diffs: []compare.Diff{
 				{Change: compare.Deleted, Key: "x", Value: 1},
 				{Change: compare.Added, Key: "x", Value: 2},
@@ -99,7 +94,7 @@ func TestFormatDiff(t *testing.T) {
 		},
 		{
 			name:   "plain renders nested values as a complex placeholder",
-			format: formatPlain,
+			format: formatters.Plain,
 			diffs: []compare.Diff{
 				{Change: compare.Added, Key: "obj", Value: []compare.Diff{
 					{Change: compare.NoChanges, Key: "a", Value: 1},
@@ -109,7 +104,7 @@ func TestFormatDiff(t *testing.T) {
 		},
 		{
 			name:   "plain dots the path and skips unchanged leaves",
-			format: formatPlain,
+			format: formatters.Plain,
 			diffs: []compare.Diff{
 				{Change: compare.NoChanges, Key: "common", Value: []compare.Diff{
 					{Change: compare.NoChanges, Key: "keep", Value: "v"},
@@ -130,7 +125,7 @@ func TestFormatDiff(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			formatted, err := output.FormatDiff(testCase.diffs, testCase.format)
+			formatted, err := formatters.Format(testCase.diffs, testCase.format)
 
 			if testCase.expectError {
 				require.Error(t, err)
