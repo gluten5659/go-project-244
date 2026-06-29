@@ -66,16 +66,24 @@ func TestFormat(t *testing.T) {
 				"}",
 		},
 		{
+			name:           "plain renders nothing for an empty diff",
+			format:         formatters.Plain,
+			diffs:          nil,
+			expectedOutput: "",
+		},
+		{
 			name:   "plain reports added values with quoting rules",
 			format: formatters.Plain,
 			diffs: []compare.Diff{
 				{Change: compare.Added, Key: "flag", Value: false},
 				{Change: compare.Added, Key: "name", Value: "bob"},
 				{Change: compare.Added, Key: "opt", Value: nil},
+				{Change: compare.Added, Key: "empty", Value: ""},
 			},
 			expectedOutput: "Property 'flag' was added with value: false\n" +
 				"Property 'name' was added with value: 'bob'\n" +
-				"Property 'opt' was added with value: null",
+				"Property 'opt' was added with value: null\n" +
+				"Property 'empty' was added with value: ''",
 		},
 		{
 			name:           "plain reports a removed property",
@@ -114,6 +122,84 @@ func TestFormat(t *testing.T) {
 			expectedOutput: "Property 'common.new' was added with value: true",
 		},
 		{
+			name:           "json renders an empty array for an empty diff",
+			format:         formatters.JSON,
+			diffs:          nil,
+			expectedOutput: "[]",
+		},
+		{
+			name:   "json represents each change kind as a typed node",
+			format: formatters.JSON,
+			diffs: []compare.Diff{
+				{Change: compare.Deleted, Key: "gone", Value: 5},
+				{Change: compare.Deleted, Key: "x", Value: 1},
+				{Change: compare.Added, Key: "x", Value: 2},
+				{Change: compare.Added, Key: "y", Value: true},
+				{Change: compare.Added, Key: "nothing", Value: nil},
+				{Change: compare.NoChanges, Key: "z", Value: "keep"},
+			},
+			expectedOutput: `[
+  {
+    "key": "gone",
+    "type": "removed",
+    "value": 5
+  },
+  {
+    "key": "x",
+    "newValue": 2,
+    "oldValue": 1,
+    "type": "updated"
+  },
+  {
+    "key": "y",
+    "type": "added",
+    "value": true
+  },
+  {
+    "key": "nothing",
+    "type": "added",
+    "value": null
+  },
+  {
+    "key": "z",
+    "type": "unchanged",
+    "value": "keep"
+  }
+]`,
+		},
+		{
+			name:   "json nests objects with changes and collapses whole values",
+			format: formatters.JSON,
+			diffs: []compare.Diff{
+				{Change: compare.NoChanges, Key: "parent", Value: []compare.Diff{
+					{Change: compare.Added, Key: "leaf", Value: 1},
+				}},
+				{Change: compare.Added, Key: "obj", Value: []compare.Diff{
+					{Change: compare.NoChanges, Key: "inner", Value: 2},
+				}},
+			},
+			expectedOutput: `[
+  {
+    "children": [
+      {
+        "key": "leaf",
+        "type": "added",
+        "value": 1
+      }
+    ],
+    "key": "parent",
+    "type": "nested"
+  },
+  {
+    "key": "obj",
+    "type": "added",
+    "value": {
+      "inner": 2
+    }
+  }
+]`,
+		},
+		{
 			name:        "unsupported format returns an error",
 			format:      "bogus",
 			diffs:       []compare.Diff{{Change: compare.Added, Key: "x", Value: 1}},
@@ -143,5 +229,9 @@ func TestFormat(t *testing.T) {
 func TestSupportedNames(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, []string{formatters.Plain, formatters.Stylish}, formatters.SupportedNames())
+	assert.Equal(
+		t,
+		[]string{formatters.JSON, formatters.Plain, formatters.Stylish},
+		formatters.SupportedNames(),
+	)
 }

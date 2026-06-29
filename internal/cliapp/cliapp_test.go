@@ -16,6 +16,9 @@ import (
 
 const (
 	commandName    = "gendiff"
+	formatFlag     = "--format"
+	nestedFirst    = "testdata/nested1.json"
+	nestedSecond   = "testdata/nested2.json"
 	exitUsage      = 64
 	exitDataErr    = 65
 	exitNoInput    = 66
@@ -34,6 +37,15 @@ func newTestCommand(tb testing.TB, output *strings.Builder) *cli.Command {
 	return command
 }
 
+const flatStylishDiff = "{\n" +
+	"  - follow: false\n" +
+	"    host: hexlet.io\n" +
+	"  - proxy: 123.234.53.22\n" +
+	"  - timeout: 50\n" +
+	"  + timeout: 20\n" +
+	"  + verbose: true\n" +
+	"}\n"
+
 func TestCommandRendersDiff(t *testing.T) {
 	t.Parallel()
 
@@ -46,16 +58,22 @@ func TestCommandRendersDiff(t *testing.T) {
 
 	require.NoError(t, err)
 
-	expected := "{\n" +
-		"  - follow: false\n" +
-		"    host: hexlet.io\n" +
-		"  - proxy: 123.234.53.22\n" +
-		"  - timeout: 50\n" +
-		"  + timeout: 20\n" +
-		"  + verbose: true\n" +
-		"}\n"
+	assert.Equal(t, flatStylishDiff, output.String())
+}
 
-	assert.Equal(t, expected, output.String())
+func TestCommandRendersYAMLDiff(t *testing.T) {
+	t.Parallel()
+
+	output := strings.Builder{}
+	command := newTestCommand(t, &output)
+
+	arguments := []string{commandName, "testdata/file1.yaml", "testdata/file2.yaml"}
+
+	err := command.Run(t.Context(), arguments)
+
+	require.NoError(t, err)
+
+	assert.Equal(t, flatStylishDiff, output.String())
 }
 
 func TestCommandRendersNestedDiff(t *testing.T) {
@@ -64,7 +82,7 @@ func TestCommandRendersNestedDiff(t *testing.T) {
 	output := strings.Builder{}
 	command := newTestCommand(t, &output)
 
-	arguments := []string{commandName, "testdata/nested1.json", "testdata/nested2.json"}
+	arguments := []string{commandName, nestedFirst, nestedSecond}
 
 	err := command.Run(t.Context(), arguments)
 
@@ -126,10 +144,10 @@ func TestCommandRendersPlainDiff(t *testing.T) {
 
 	arguments := []string{
 		commandName,
-		"--format",
+		formatFlag,
 		"plain",
-		"testdata/nested1.json",
-		"testdata/nested2.json",
+		nestedFirst,
+		nestedSecond,
 	}
 
 	err := command.Run(t.Context(), arguments)
@@ -151,6 +169,145 @@ func TestCommandRendersPlainDiff(t *testing.T) {
 	assert.Equal(t, expected, output.String())
 }
 
+func TestCommandRendersJSONDiff(t *testing.T) {
+	t.Parallel()
+
+	output := strings.Builder{}
+	command := newTestCommand(t, &output)
+
+	arguments := []string{
+		commandName,
+		formatFlag,
+		"json",
+		nestedFirst,
+		nestedSecond,
+	}
+
+	err := command.Run(t.Context(), arguments)
+
+	require.NoError(t, err)
+
+	expected := `[
+  {
+    "children": [
+      {
+        "key": "follow",
+        "type": "added",
+        "value": false
+      },
+      {
+        "key": "setting1",
+        "type": "unchanged",
+        "value": "Value 1"
+      },
+      {
+        "key": "setting2",
+        "type": "removed",
+        "value": 200
+      },
+      {
+        "key": "setting3",
+        "newValue": null,
+        "oldValue": true,
+        "type": "updated"
+      },
+      {
+        "key": "setting4",
+        "type": "added",
+        "value": "blah blah"
+      },
+      {
+        "key": "setting5",
+        "type": "added",
+        "value": {
+          "key5": "value5"
+        }
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "key": "wow",
+                "newValue": "so much",
+                "oldValue": "",
+                "type": "updated"
+              }
+            ],
+            "key": "doge",
+            "type": "nested"
+          },
+          {
+            "key": "key",
+            "type": "unchanged",
+            "value": "value"
+          },
+          {
+            "key": "ops",
+            "type": "added",
+            "value": "vops"
+          }
+        ],
+        "key": "setting6",
+        "type": "nested"
+      }
+    ],
+    "key": "common",
+    "type": "nested"
+  },
+  {
+    "children": [
+      {
+        "key": "baz",
+        "newValue": "bars",
+        "oldValue": "bas",
+        "type": "updated"
+      },
+      {
+        "key": "foo",
+        "type": "unchanged",
+        "value": "bar"
+      },
+      {
+        "key": "nest",
+        "newValue": "str",
+        "oldValue": {
+          "key": "value"
+        },
+        "type": "updated"
+      }
+    ],
+    "key": "group1",
+    "type": "nested"
+  },
+  {
+    "key": "group2",
+    "type": "removed",
+    "value": {
+      "abc": 12345,
+      "deep": {
+        "id": 45
+      }
+    }
+  },
+  {
+    "key": "group3",
+    "type": "added",
+    "value": {
+      "deep": {
+        "id": {
+          "number": 45
+        }
+      },
+      "fee": 100500
+    }
+  }
+]
+`
+
+	assert.Equal(t, expected, output.String())
+}
+
 func TestCommandExitCodes(t *testing.T) {
 	t.Parallel()
 
@@ -166,7 +323,7 @@ func TestCommandExitCodes(t *testing.T) {
 
 				readable := testutil.WriteTempFile(tb, `{}`)
 
-				return []string{commandName, "--format", "bogus", readable, readable}
+				return []string{commandName, formatFlag, "bogus", readable, readable}
 			},
 			expectedExitCode: exitUsage,
 		},

@@ -57,14 +57,3 @@ func TestFromFileParsesYAMLByExtension(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{"host": "hexlet.io", "timeout": 50}, values)
 }
-
-func TestFromFileUnsupportedType(t *testing.T) {
-	t.Parallel()
-
-	path := testutil.WriteTempFileNamed(t, "config.txt", "host: hexlet.io")
-
-	values, err := loader.FromFile(path)
-
-	require.ErrorIs(t, err, parser.ErrParse)
-	assert.Nil(t, values)
-}

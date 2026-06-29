@@ -65,7 +65,7 @@ func TestCompare(t *testing.T) {
 			},
 		},
 		{
-			name:       "equal nested values stay unchanged without panic",
+			name:       "equal slice values stay unchanged",
 			firstFile:  map[string]any{keyList: []any{1, 2, 3}},
 			secondFile: map[string]any{keyList: []any{1, 2, 3}},
 			expectedDiffs: []compare.Diff{
@@ -116,13 +116,16 @@ func TestCompare(t *testing.T) {
 			},
 		},
 		{
-			name:       "object only in second file is added as a deeply nested tree",
-			firstFile:  map[string]any{},
-			secondFile: map[string]any{keyNested: map[string]any{"a": map[string]any{"b": 1}}},
+			name:      "object only in second file is added as a sorted nested tree",
+			firstFile: map[string]any{},
+			secondFile: map[string]any{
+				keyNested: map[string]any{"alpha": 1, "beta": map[string]any{"gamma": 2}},
+			},
 			expectedDiffs: []compare.Diff{
 				{Change: compare.Added, Key: keyNested, Value: []compare.Diff{
-					{Change: compare.NoChanges, Key: "a", Value: []compare.Diff{
-						{Change: compare.NoChanges, Key: "b", Value: 1},
+					{Change: compare.NoChanges, Key: "alpha", Value: 1},
+					{Change: compare.NoChanges, Key: "beta", Value: []compare.Diff{
+						{Change: compare.NoChanges, Key: "gamma", Value: 2},
 					}},
 				}},
 			},
