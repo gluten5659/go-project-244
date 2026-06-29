@@ -12,6 +12,7 @@ import (
 const (
 	Stylish = "stylish"
 	Plain   = "plain"
+	JSON    = "json"
 )
 
 var ErrUnsupportedFormat = errors.New("unsupported output format")
@@ -20,6 +21,7 @@ func writers() map[string]func(*strings.Builder, []compare.Diff) {
 	return map[string]func(*strings.Builder, []compare.Diff){
 		Stylish: writeStylishRoot,
 		Plain:   writePlainRoot,
+		JSON:    writeJSON,
 	}
 }
 
