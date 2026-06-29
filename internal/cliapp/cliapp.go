@@ -10,6 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"slices"
+	"strings"
 
 	"github.com/urfave/cli/v3"
 )
@@ -36,10 +38,19 @@ func NewCommand() *cli.Command {
 		},
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:        "format",
-				Aliases:     []string{"f"},
-				Value:       formatters.Stylish,
-				Usage:       "output format",
+				Name:    "format",
+				Aliases: []string{"f"},
+				Value:   formatters.Stylish,
+				Usage:   "output format: " + strings.Join(formatters.SupportedNames(), ", "),
+				Validator: func(value string) error {
+					if slices.Contains(formatters.SupportedNames(), value) {
+						return nil
+					}
+
+					return cli.Exit(fmt.Errorf("%w: %q (supported: %s)",
+						formatters.ErrUnsupportedFormat, value,
+						strings.Join(formatters.SupportedNames(), ", ")), exitUsage)
+				},
 				Destination: &format,
 			},
 		},

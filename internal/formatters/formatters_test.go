@@ -139,3 +139,9 @@ func TestFormat(t *testing.T) {
 		})
 	}
 }
+
+func TestSupportedNames(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, []string{formatters.Plain, formatters.Stylish}, formatters.SupportedNames())
+}
