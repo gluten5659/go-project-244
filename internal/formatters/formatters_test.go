@@ -122,10 +122,12 @@ func TestFormat(t *testing.T) {
 			expectedOutput: "Property 'common.new' was added with value: true",
 		},
 		{
-			name:           "json renders an empty array for an empty diff",
-			format:         formatters.JSON,
-			diffs:          nil,
-			expectedOutput: "[]",
+			name:   "json wraps an empty diff in a diff object",
+			format: formatters.JSON,
+			diffs:  nil,
+			expectedOutput: `{
+  "diff": []
+}`,
 		},
 		{
 			name:   "json represents each change kind as a typed node",
@@ -138,34 +140,36 @@ func TestFormat(t *testing.T) {
 				{Change: compare.Added, Key: "nothing", Value: nil},
 				{Change: compare.NoChanges, Key: "z", Value: "keep"},
 			},
-			expectedOutput: `[
-  {
-    "key": "gone",
-    "type": "removed",
-    "value": 5
-  },
-  {
-    "key": "x",
-    "newValue": 2,
-    "oldValue": 1,
-    "type": "updated"
-  },
-  {
-    "key": "y",
-    "type": "added",
-    "value": true
-  },
-  {
-    "key": "nothing",
-    "type": "added",
-    "value": null
-  },
-  {
-    "key": "z",
-    "type": "unchanged",
-    "value": "keep"
-  }
-]`,
+			expectedOutput: `{
+  "diff": [
+    {
+      "key": "gone",
+      "type": "removed",
+      "value": 5
+    },
+    {
+      "key": "x",
+      "newValue": 2,
+      "oldValue": 1,
+      "type": "updated"
+    },
+    {
+      "key": "y",
+      "type": "added",
+      "value": true
+    },
+    {
+      "key": "nothing",
+      "type": "added",
+      "value": null
+    },
+    {
+      "key": "z",
+      "type": "unchanged",
+      "value": "keep"
+    }
+  ]
+}`,
 		},
 		{
 			name:   "json nests objects with changes and collapses whole values",
@@ -178,26 +182,28 @@ func TestFormat(t *testing.T) {
 					{Change: compare.NoChanges, Key: "inner", Value: 2},
 				}},
 			},
-			expectedOutput: `[
-  {
-    "children": [
-      {
-        "key": "leaf",
-        "type": "added",
-        "value": 1
+			expectedOutput: `{
+  "diff": [
+    {
+      "children": [
+        {
+          "key": "leaf",
+          "type": "added",
+          "value": 1
+        }
+      ],
+      "key": "parent",
+      "type": "nested"
+    },
+    {
+      "key": "obj",
+      "type": "added",
+      "value": {
+        "inner": 2
       }
-    ],
-    "key": "parent",
-    "type": "nested"
-  },
-  {
-    "key": "obj",
-    "type": "added",
-    "value": {
-      "inner": 2
     }
-  }
-]`,
+  ]
+}`,
 		},
 		{
 			name:        "unsupported format returns an error",

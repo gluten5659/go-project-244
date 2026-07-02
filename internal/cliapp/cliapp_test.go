@@ -187,122 +187,124 @@ func TestCommandRendersJSONDiff(t *testing.T) {
 
 	require.NoError(t, err)
 
-	expected := `[
-  {
-    "children": [
-      {
-        "key": "follow",
-        "type": "added",
-        "value": false
-      },
-      {
-        "key": "setting1",
-        "type": "unchanged",
-        "value": "Value 1"
-      },
-      {
-        "key": "setting2",
-        "type": "removed",
-        "value": 200
-      },
-      {
-        "key": "setting3",
-        "newValue": null,
-        "oldValue": true,
-        "type": "updated"
-      },
-      {
-        "key": "setting4",
-        "type": "added",
-        "value": "blah blah"
-      },
-      {
-        "key": "setting5",
-        "type": "added",
-        "value": {
-          "key5": "value5"
-        }
-      },
-      {
-        "children": [
-          {
-            "children": [
-              {
-                "key": "wow",
-                "newValue": "so much",
-                "oldValue": "",
-                "type": "updated"
-              }
-            ],
-            "key": "doge",
-            "type": "nested"
-          },
-          {
-            "key": "key",
-            "type": "unchanged",
-            "value": "value"
-          },
-          {
-            "key": "ops",
-            "type": "added",
-            "value": "vops"
-          }
-        ],
-        "key": "setting6",
-        "type": "nested"
-      }
-    ],
-    "key": "common",
-    "type": "nested"
-  },
-  {
-    "children": [
-      {
-        "key": "baz",
-        "newValue": "bars",
-        "oldValue": "bas",
-        "type": "updated"
-      },
-      {
-        "key": "foo",
-        "type": "unchanged",
-        "value": "bar"
-      },
-      {
-        "key": "nest",
-        "newValue": "str",
-        "oldValue": {
-          "key": "value"
+	expected := `{
+  "diff": [
+    {
+      "children": [
+        {
+          "key": "follow",
+          "type": "added",
+          "value": false
         },
-        "type": "updated"
-      }
-    ],
-    "key": "group1",
-    "type": "nested"
-  },
-  {
-    "key": "group2",
-    "type": "removed",
-    "value": {
-      "abc": 12345,
-      "deep": {
-        "id": 45
-      }
-    }
-  },
-  {
-    "key": "group3",
-    "type": "added",
-    "value": {
-      "deep": {
-        "id": {
-          "number": 45
+        {
+          "key": "setting1",
+          "type": "unchanged",
+          "value": "Value 1"
+        },
+        {
+          "key": "setting2",
+          "type": "removed",
+          "value": 200
+        },
+        {
+          "key": "setting3",
+          "newValue": null,
+          "oldValue": true,
+          "type": "updated"
+        },
+        {
+          "key": "setting4",
+          "type": "added",
+          "value": "blah blah"
+        },
+        {
+          "key": "setting5",
+          "type": "added",
+          "value": {
+            "key5": "value5"
+          }
+        },
+        {
+          "children": [
+            {
+              "children": [
+                {
+                  "key": "wow",
+                  "newValue": "so much",
+                  "oldValue": "",
+                  "type": "updated"
+                }
+              ],
+              "key": "doge",
+              "type": "nested"
+            },
+            {
+              "key": "key",
+              "type": "unchanged",
+              "value": "value"
+            },
+            {
+              "key": "ops",
+              "type": "added",
+              "value": "vops"
+            }
+          ],
+          "key": "setting6",
+          "type": "nested"
         }
-      },
-      "fee": 100500
+      ],
+      "key": "common",
+      "type": "nested"
+    },
+    {
+      "children": [
+        {
+          "key": "baz",
+          "newValue": "bars",
+          "oldValue": "bas",
+          "type": "updated"
+        },
+        {
+          "key": "foo",
+          "type": "unchanged",
+          "value": "bar"
+        },
+        {
+          "key": "nest",
+          "newValue": "str",
+          "oldValue": {
+            "key": "value"
+          },
+          "type": "updated"
+        }
+      ],
+      "key": "group1",
+      "type": "nested"
+    },
+    {
+      "key": "group2",
+      "type": "removed",
+      "value": {
+        "abc": 12345,
+        "deep": {
+          "id": 45
+        }
+      }
+    },
+    {
+      "key": "group3",
+      "type": "added",
+      "value": {
+        "deep": {
+          "id": {
+            "number": 45
+          }
+        },
+        "fee": 100500
+      }
     }
-  }
-]
+  ]
+}
 `
 
 	assert.Equal(t, expected, output.String())

@@ -13,6 +13,7 @@ const (
 	fieldOldValue = "oldValue"
 	fieldNewValue = "newValue"
 	fieldChildren = "children"
+	fieldDiff     = "diff"
 
 	nodeAdded     = "added"
 	nodeRemoved   = "removed"
@@ -22,7 +23,9 @@ const (
 )
 
 func writeJSON(builder *strings.Builder, diffs []compare.Diff) {
-	encoded, err := json.MarshalIndent(jsonNodes(diffs), "", "  ")
+	document := map[string]any{fieldDiff: jsonNodes(diffs)}
+
+	encoded, err := json.MarshalIndent(document, "", "  ")
 	if err != nil {
 		panic(err)
 	}
