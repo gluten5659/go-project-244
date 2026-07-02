@@ -50,9 +50,15 @@ func TestParse(t *testing.T) {
 			expectedError: parser.ErrParse,
 		},
 		{
-			name:          "json array is not an object",
+			name:           "json top-level array is treated as an empty object",
+			fileType:       parser.TypeJSON,
+			content:        `[1, 2, 3]`,
+			expectedConfig: map[string]any{},
+		},
+		{
+			name:          "malformed json array stays a parse error",
 			fileType:      parser.TypeJSON,
-			content:       `[1, 2, 3]`,
+			content:       `[1, 2`,
 			expectedError: parser.ErrParse,
 		},
 		{
@@ -78,6 +84,12 @@ func TestParse(t *testing.T) {
 			fileType:       parser.TypeYAML,
 			content:        "settings:\n  timeout: 50",
 			expectedConfig: map[string]any{settingsKey: map[string]any{timeoutKey: 50}},
+		},
+		{
+			name:           "yaml top-level sequence is treated as an empty object",
+			fileType:       parser.TypeYAML,
+			content:        "- 1\n- 2\n- 3",
+			expectedConfig: map[string]any{},
 		},
 		{
 			name:          "yaml scalar is not a mapping",
