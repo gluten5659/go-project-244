@@ -1,10 +1,9 @@
 package cliapp
 
 import (
-	"code/internal/compare"
+	"code"
 	"code/internal/files"
 	"code/internal/formatters"
-	"code/internal/loader"
 	"code/internal/parser"
 	"context"
 	"errors"
@@ -71,21 +70,9 @@ func NewCommand() *cli.Command {
 }
 
 func run(cmd *cli.Command, firstFilePath, secondFilePath, format string) error {
-	firstFile, err := loader.FromFile(firstFilePath)
+	formatted, err := code.GenDiff(firstFilePath, secondFilePath, format)
 	if err != nil {
 		return cli.Exit(err, exitCodeFor(err))
-	}
-
-	secondFile, err := loader.FromFile(secondFilePath)
-	if err != nil {
-		return cli.Exit(err, exitCodeFor(err))
-	}
-
-	diffs := compare.Compare(firstFile, secondFile)
-
-	formatted, err := formatters.Format(diffs, format)
-	if err != nil {
-		return cli.Exit(fmt.Errorf("%w: %s", errUsage, err.Error()), exitUsage)
 	}
 
 	_, err = fmt.Fprintln(cmd.Writer, formatted)
