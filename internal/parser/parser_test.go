@@ -80,6 +80,12 @@ func TestParse(t *testing.T) {
 			expectedConfig: map[string]any{settingsKey: map[string]any{timeoutKey: 50}},
 		},
 		{
+			name:           "yaml non-string keys normalize into string-keyed maps",
+			fileType:       parser.TypeYAML,
+			content:        "settings:\n  1: one\n  2: two",
+			expectedConfig: map[string]any{settingsKey: map[string]any{"1": "one", "2": "two"}},
+		},
+		{
 			name:          "yaml scalar is not a mapping",
 			fileType:      parser.TypeYAML,
 			content:       `just a string`,
