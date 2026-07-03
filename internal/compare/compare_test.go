@@ -73,6 +73,15 @@ func TestCompare(t *testing.T) {
 			},
 		},
 		{
+			name:       "different slice values are deleted then added",
+			firstFile:  map[string]any{keyList: []any{1, 2, 3}},
+			secondFile: map[string]any{keyList: []any{1, 2, 4}},
+			expectedDiffs: []compare.Diff{
+				{Kind: compare.Deleted, Key: keyList, Value: []any{1, 2, 3}},
+				{Kind: compare.Added, Key: keyList, Value: []any{1, 2, 4}},
+			},
+		},
+		{
 			name:       "different nested values recurse into a child diff",
 			firstFile:  map[string]any{keyNested: map[string]any{"x": 1}},
 			secondFile: map[string]any{keyNested: map[string]any{"x": 2}},
