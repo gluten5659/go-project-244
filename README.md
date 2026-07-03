@@ -37,11 +37,83 @@ Switch the format with `--format` (or `-f`) — `stylish`, `plain`, or `json`:
 gendiff --format plain sample/before.json sample/after.json
 ```
 
+The `json` format is machine-readable — the whole diff tree is wrapped in a
+`diff` array, and every node carries its `key`, `type`, and value:
+
+```bash
+gendiff --format json sample/before.json sample/after.json
+```
+
+```json
+{
+  "diff": [
+    {
+      "key": "follow",
+      "type": "removed",
+      "value": false
+    },
+    {
+      "key": "host",
+      "type": "unchanged",
+      "value": "hexlet.io"
+    },
+    {
+      "key": "proxy",
+      "type": "removed",
+      "value": "123.234.53.22"
+    },
+    {
+      "children": [
+        {
+          "key": "cache",
+          "newValue": false,
+          "oldValue": true,
+          "type": "updated"
+        },
+        {
+          "key": "ttl",
+          "type": "unchanged",
+          "value": 60
+        }
+      ],
+      "key": "settings",
+      "type": "nested"
+    },
+    {
+      "key": "timeout",
+      "newValue": 20,
+      "oldValue": 50,
+      "type": "updated"
+    },
+    {
+      "key": "verbose",
+      "type": "added",
+      "value": true
+    }
+  ]
+}
+```
+
 JSON and YAML mix freely, so the two files don't have to share a format:
 
 ```bash
 gendiff sample/before.yaml sample/after.yaml
 ```
+
+## Exit codes
+
+`gendiff` follows the BSD `sysexits` conventions, so scripts can tell failures
+apart:
+
+| Code | Meaning |
+|------|---------|
+| 0  | Success |
+| 1  | Unexpected error |
+| 64 | Usage error — bad flag, unsupported format, or wrong number of paths |
+| 65 | Data error — malformed or unsupported input file |
+| 66 | Input file not found |
+| 74 | I/O error — reading a file or writing the result |
+| 77 | Permission denied |
 
 ## Development
 
