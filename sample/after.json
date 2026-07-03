@@ -1,0 +1,9 @@
+{
+  "host": "hexlet.io",
+  "timeout": 20,
+  "verbose": true,
+  "settings": {
+    "cache": false,
+    "ttl": 60
+  }
+}
