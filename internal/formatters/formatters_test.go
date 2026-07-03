@@ -3,6 +3,7 @@ package formatters_test
 import (
 	"code/internal/compare"
 	"code/internal/formatters"
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -209,6 +210,12 @@ func TestFormat(t *testing.T) {
 			name:        "unsupported format returns an error",
 			format:      "bogus",
 			diffs:       []compare.Diff{{Kind: compare.Added, Key: "x", Value: 1}},
+			expectError: true,
+		},
+		{
+			name:        "json marshalling failure surfaces as an error",
+			format:      formatters.JSON,
+			diffs:       []compare.Diff{{Kind: compare.Added, Key: "x", Value: math.NaN()}},
 			expectError: true,
 		},
 	}

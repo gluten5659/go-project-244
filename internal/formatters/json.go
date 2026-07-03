@@ -3,6 +3,7 @@ package formatters
 import (
 	"code/internal/compare"
 	"encoding/json"
+	"fmt"
 	"strings"
 )
 
@@ -22,15 +23,17 @@ const (
 	nodeNested    = "nested"
 )
 
-func writeJSON(builder *strings.Builder, diffs []compare.Diff) {
+func writeJSON(builder *strings.Builder, diffs []compare.Diff) error {
 	document := map[string]any{fieldDiff: jsonNodes(diffs)}
 
 	encoded, err := json.MarshalIndent(document, "", "  ")
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("marshal json diff: %w", err)
 	}
 
 	builder.Write(encoded)
+
+	return nil
 }
 
 func jsonNodes(diffs []compare.Diff) []map[string]any {

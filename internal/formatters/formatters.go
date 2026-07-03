@@ -17,8 +17,10 @@ const (
 
 var ErrUnsupportedFormat = errors.New("unsupported output format")
 
-func writers() map[string]func(*strings.Builder, []compare.Diff) {
-	return map[string]func(*strings.Builder, []compare.Diff){
+type writer func(*strings.Builder, []compare.Diff) error
+
+func writers() map[string]writer {
+	return map[string]writer{
 		Stylish: writeStylishRoot,
 		Plain:   writePlainRoot,
 		JSON:    writeJSON,
@@ -32,7 +34,11 @@ func Format(diffs []compare.Diff, name string) (string, error) {
 	}
 
 	builder := strings.Builder{}
-	write(&builder, diffs)
+
+	err := write(&builder, diffs)
+	if err != nil {
+		return "", err
+	}
 
 	return strings.TrimRight(builder.String(), "\n"), nil
 }
@@ -44,12 +50,16 @@ func SupportedNames() []string {
 	return names
 }
 
-func writeStylishRoot(builder *strings.Builder, diffs []compare.Diff) {
+func writeStylishRoot(builder *strings.Builder, diffs []compare.Diff) error {
 	writeStylish(builder, diffs, 0)
+
+	return nil
 }
 
-func writePlainRoot(builder *strings.Builder, diffs []compare.Diff) {
+func writePlainRoot(builder *strings.Builder, diffs []compare.Diff) error {
 	writePlain(builder, diffs, "")
+
+	return nil
 }
 
 type mergedDiff struct {
