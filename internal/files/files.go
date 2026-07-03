@@ -14,7 +14,7 @@ func Read(path string) (string, []byte, error) {
 
 	content, err := os.ReadFile(path)
 	if err != nil {
-		return fileType, nil, fmt.Errorf("%w: %w", ErrRead, err)
+		return fileType, nil, fmt.Errorf("%w: %w", ErrRead, errors.Unwrap(err))
 	}
 
 	return fileType, content, nil
