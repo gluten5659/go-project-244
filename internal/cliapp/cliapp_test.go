@@ -330,6 +330,37 @@ func TestCommandExitCodes(t *testing.T) {
 			expectedExitCode: exitUsage,
 		},
 		{
+			name: "no file paths yield a usage error",
+			buildArguments: func(tb testing.TB) []string {
+				tb.Helper()
+
+				return []string{commandName}
+			},
+			expectedExitCode: exitUsage,
+		},
+		{
+			name: "a single file path yields a usage error",
+			buildArguments: func(tb testing.TB) []string {
+				tb.Helper()
+
+				readable := testutil.WriteTempFile(tb, `{}`)
+
+				return []string{commandName, readable}
+			},
+			expectedExitCode: exitUsage,
+		},
+		{
+			name: "extra file paths yield a usage error",
+			buildArguments: func(tb testing.TB) []string {
+				tb.Helper()
+
+				readable := testutil.WriteTempFile(tb, `{}`)
+
+				return []string{commandName, readable, readable, readable}
+			},
+			expectedExitCode: exitUsage,
+		},
+		{
 			name: "malformed json yields a data error",
 			buildArguments: func(tb testing.TB) []string {
 				tb.Helper()

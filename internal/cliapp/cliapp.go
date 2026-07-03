@@ -70,6 +70,10 @@ func NewCommand() *cli.Command {
 }
 
 func run(cmd *cli.Command, firstFilePath, secondFilePath, format string) error {
+	if firstFilePath == "" || secondFilePath == "" || cmd.NArg() > 0 {
+		return cli.Exit(fmt.Errorf("%w: exactly two file paths are required", errUsage), exitUsage)
+	}
+
 	formatted, err := code.GenDiff(firstFilePath, secondFilePath, format)
 	if err != nil {
 		return cli.Exit(err, exitCodeFor(err))
