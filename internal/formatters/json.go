@@ -34,20 +34,17 @@ func writeJSON(builder *strings.Builder, diffs []compare.Diff) {
 }
 
 func jsonNodes(diffs []compare.Diff) []map[string]any {
-	nodes := make([]map[string]any, 0, len(diffs))
+	merged := mergeUpdates(diffs)
 
-	for index := 0; index < len(diffs); index++ {
-		diff := diffs[index]
-
-		if diff.Change == compare.Deleted &&
-			index+1 < len(diffs) && isUpdatedTo(diffs[index+1], diff.Key) {
-			nodes = append(nodes, updatedNode(diff.Key, diff.Value, diffs[index+1].Value))
-			index++
+	nodes := make([]map[string]any, 0, len(merged))
+	for _, entry := range merged {
+		if entry.updated {
+			nodes = append(nodes, updatedNode(entry.Key, entry.Value, entry.newValue))
 
 			continue
 		}
 
-		nodes = append(nodes, changeNode(diff))
+		nodes = append(nodes, changeNode(entry.Diff))
 	}
 
 	return nodes

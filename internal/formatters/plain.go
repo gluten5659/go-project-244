@@ -7,25 +7,26 @@ import (
 )
 
 func writePlain(builder *strings.Builder, diffs []compare.Diff, parentPath string) {
-	for index := 0; index < len(diffs); index++ {
-		diff := diffs[index]
-		path := plainPath(parentPath, diff.Key)
+	for _, entry := range mergeUpdates(diffs) {
+		path := plainPath(parentPath, entry.Key)
 
-		switch diff.Change {
-		case compare.NoChanges:
-			if children, isNested := diff.Value.([]compare.Diff); isNested {
+		switch {
+		case entry.updated:
+			fmt.Fprintf(builder, "Property '%s' was updated. From %s to %s\n",
+				path, plainValue(entry.Value), plainValue(entry.newValue))
+		case entry.Change == compare.NoChanges:
+			if children, isNested := entry.Value.([]compare.Diff); isNested {
 				writePlain(builder, children, path)
 			}
-		case compare.Deleted:
-			if index+1 < len(diffs) && isUpdatedTo(diffs[index+1], diff.Key) {
-				fmt.Fprintf(builder, "Property '%s' was updated. From %s to %s\n",
-					path, plainValue(diff.Value), plainValue(diffs[index+1].Value))
-				index++
-			} else {
-				fmt.Fprintf(builder, "Property '%s' was removed\n", path)
-			}
-		case compare.Added:
-			fmt.Fprintf(builder, "Property '%s' was added with value: %s\n", path, plainValue(diff.Value))
+		case entry.Change == compare.Deleted:
+			fmt.Fprintf(builder, "Property '%s' was removed\n", path)
+		case entry.Change == compare.Added:
+			fmt.Fprintf(
+				builder,
+				"Property '%s' was added with value: %s\n",
+				path,
+				plainValue(entry.Value),
+			)
 		}
 	}
 }
@@ -36,10 +37,6 @@ func plainPath(parentPath, key string) string {
 	}
 
 	return parentPath + "." + key
-}
-
-func isUpdatedTo(next compare.Diff, key string) bool {
-	return next.Change == compare.Added && next.Key == key
 }
 
 func plainValue(value any) string {
