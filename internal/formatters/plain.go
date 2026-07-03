@@ -14,13 +14,13 @@ func writePlain(builder *strings.Builder, diffs []compare.Diff, parentPath strin
 		case entry.updated:
 			fmt.Fprintf(builder, "Property '%s' was updated. From %s to %s\n",
 				path, plainValue(entry.Value), plainValue(entry.newValue))
-		case entry.Change == compare.NoChanges:
+		case entry.Kind == compare.Unchanged:
 			if children, isNested := entry.Value.([]compare.Diff); isNested {
 				writePlain(builder, children, path)
 			}
-		case entry.Change == compare.Deleted:
+		case entry.Kind == compare.Deleted:
 			fmt.Fprintf(builder, "Property '%s' was removed\n", path)
-		case entry.Change == compare.Added:
+		case entry.Kind == compare.Added:
 			fmt.Fprintf(
 				builder,
 				"Property '%s' was added with value: %s\n",

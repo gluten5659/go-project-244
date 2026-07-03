@@ -29,9 +29,9 @@ func TestFormat(t *testing.T) {
 			name:   "stylish gives each change kind its marker at the root level",
 			format: formatters.Stylish,
 			diffs: []compare.Diff{
-				{Change: compare.Deleted, Key: "follow", Value: false},
-				{Change: compare.NoChanges, Key: "host", Value: "hexlet.io"},
-				{Change: compare.Added, Key: "verbose", Value: true},
+				{Kind: compare.Deleted, Key: "follow", Value: false},
+				{Kind: compare.Unchanged, Key: "host", Value: "hexlet.io"},
+				{Kind: compare.Added, Key: "verbose", Value: true},
 			},
 			expectedOutput: "{\n" +
 				"  - follow: false\n" +
@@ -42,17 +42,17 @@ func TestFormat(t *testing.T) {
 		{
 			name:           "stylish renders a nil value as null",
 			format:         formatters.Stylish,
-			diffs:          []compare.Diff{{Change: compare.Added, Key: "setting3", Value: nil}},
+			diffs:          []compare.Diff{{Kind: compare.Added, Key: "setting3", Value: nil}},
 			expectedOutput: "{\n  + setting3: null\n}",
 		},
 		{
 			name:   "stylish indents nested children by depth",
 			format: formatters.Stylish,
 			diffs: []compare.Diff{
-				{Change: compare.NoChanges, Key: "common", Value: []compare.Diff{
-					{Change: compare.Added, Key: "follow", Value: false},
-					{Change: compare.NoChanges, Key: "sub", Value: []compare.Diff{
-						{Change: compare.Deleted, Key: "x", Value: 1},
+				{Kind: compare.Unchanged, Key: "common", Value: []compare.Diff{
+					{Kind: compare.Added, Key: "follow", Value: false},
+					{Kind: compare.Unchanged, Key: "sub", Value: []compare.Diff{
+						{Kind: compare.Deleted, Key: "x", Value: 1},
 					}},
 				}},
 			},
@@ -75,10 +75,10 @@ func TestFormat(t *testing.T) {
 			name:   "plain reports added values with quoting rules",
 			format: formatters.Plain,
 			diffs: []compare.Diff{
-				{Change: compare.Added, Key: "flag", Value: false},
-				{Change: compare.Added, Key: "name", Value: "bob"},
-				{Change: compare.Added, Key: "opt", Value: nil},
-				{Change: compare.Added, Key: "empty", Value: ""},
+				{Kind: compare.Added, Key: "flag", Value: false},
+				{Kind: compare.Added, Key: "name", Value: "bob"},
+				{Kind: compare.Added, Key: "opt", Value: nil},
+				{Kind: compare.Added, Key: "empty", Value: ""},
 			},
 			expectedOutput: "Property 'flag' was added with value: false\n" +
 				"Property 'name' was added with value: 'bob'\n" +
@@ -88,15 +88,15 @@ func TestFormat(t *testing.T) {
 		{
 			name:           "plain reports a removed property",
 			format:         formatters.Plain,
-			diffs:          []compare.Diff{{Change: compare.Deleted, Key: "old", Value: 1}},
+			diffs:          []compare.Diff{{Kind: compare.Deleted, Key: "old", Value: 1}},
 			expectedOutput: "Property 'old' was removed",
 		},
 		{
 			name:   "plain joins a deleted and added pair into an update",
 			format: formatters.Plain,
 			diffs: []compare.Diff{
-				{Change: compare.Deleted, Key: "x", Value: 1},
-				{Change: compare.Added, Key: "x", Value: 2},
+				{Kind: compare.Deleted, Key: "x", Value: 1},
+				{Kind: compare.Added, Key: "x", Value: 2},
 			},
 			expectedOutput: "Property 'x' was updated. From 1 to 2",
 		},
@@ -104,8 +104,8 @@ func TestFormat(t *testing.T) {
 			name:   "plain renders nested values as a complex placeholder",
 			format: formatters.Plain,
 			diffs: []compare.Diff{
-				{Change: compare.Added, Key: "obj", Value: []compare.Diff{
-					{Change: compare.NoChanges, Key: "a", Value: 1},
+				{Kind: compare.Added, Key: "obj", Value: []compare.Diff{
+					{Kind: compare.Unchanged, Key: "a", Value: 1},
 				}},
 			},
 			expectedOutput: "Property 'obj' was added with value: [complex value]",
@@ -114,9 +114,9 @@ func TestFormat(t *testing.T) {
 			name:   "plain dots the path and skips unchanged leaves",
 			format: formatters.Plain,
 			diffs: []compare.Diff{
-				{Change: compare.NoChanges, Key: "common", Value: []compare.Diff{
-					{Change: compare.NoChanges, Key: "keep", Value: "v"},
-					{Change: compare.Added, Key: "new", Value: true},
+				{Kind: compare.Unchanged, Key: "common", Value: []compare.Diff{
+					{Kind: compare.Unchanged, Key: "keep", Value: "v"},
+					{Kind: compare.Added, Key: "new", Value: true},
 				}},
 			},
 			expectedOutput: "Property 'common.new' was added with value: true",
@@ -133,12 +133,12 @@ func TestFormat(t *testing.T) {
 			name:   "json represents each change kind as a typed node",
 			format: formatters.JSON,
 			diffs: []compare.Diff{
-				{Change: compare.Deleted, Key: "gone", Value: 5},
-				{Change: compare.Deleted, Key: "x", Value: 1},
-				{Change: compare.Added, Key: "x", Value: 2},
-				{Change: compare.Added, Key: "y", Value: true},
-				{Change: compare.Added, Key: "nothing", Value: nil},
-				{Change: compare.NoChanges, Key: "z", Value: "keep"},
+				{Kind: compare.Deleted, Key: "gone", Value: 5},
+				{Kind: compare.Deleted, Key: "x", Value: 1},
+				{Kind: compare.Added, Key: "x", Value: 2},
+				{Kind: compare.Added, Key: "y", Value: true},
+				{Kind: compare.Added, Key: "nothing", Value: nil},
+				{Kind: compare.Unchanged, Key: "z", Value: "keep"},
 			},
 			expectedOutput: `{
   "diff": [
@@ -175,11 +175,11 @@ func TestFormat(t *testing.T) {
 			name:   "json nests objects with changes and collapses whole values",
 			format: formatters.JSON,
 			diffs: []compare.Diff{
-				{Change: compare.NoChanges, Key: "parent", Value: []compare.Diff{
-					{Change: compare.Added, Key: "leaf", Value: 1},
+				{Kind: compare.Unchanged, Key: "parent", Value: []compare.Diff{
+					{Kind: compare.Added, Key: "leaf", Value: 1},
 				}},
-				{Change: compare.Added, Key: "obj", Value: []compare.Diff{
-					{Change: compare.NoChanges, Key: "inner", Value: 2},
+				{Kind: compare.Added, Key: "obj", Value: []compare.Diff{
+					{Kind: compare.Unchanged, Key: "inner", Value: 2},
 				}},
 			},
 			expectedOutput: `{
@@ -208,7 +208,7 @@ func TestFormat(t *testing.T) {
 		{
 			name:        "unsupported format returns an error",
 			format:      "bogus",
-			diffs:       []compare.Diff{{Change: compare.Added, Key: "x", Value: 1}},
+			diffs:       []compare.Diff{{Kind: compare.Added, Key: "x", Value: 1}},
 			expectError: true,
 		},
 	}

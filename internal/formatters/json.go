@@ -54,19 +54,19 @@ func changeNode(diff compare.Diff) map[string]any {
 	children, isTree := diff.Value.([]compare.Diff)
 
 	switch {
-	case diff.Change == compare.NoChanges && isTree:
+	case diff.Kind == compare.Unchanged && isTree:
 		return map[string]any{
 			fieldKey:      diff.Key,
 			fieldType:     nodeNested,
 			fieldChildren: jsonNodes(children),
 		}
-	case diff.Change == compare.NoChanges:
+	case diff.Kind == compare.Unchanged:
 		return map[string]any{
 			fieldKey:   diff.Key,
 			fieldType:  nodeUnchanged,
 			fieldValue: diff.Value,
 		}
-	case diff.Change == compare.Added:
+	case diff.Kind == compare.Added:
 		return map[string]any{
 			fieldKey:   diff.Key,
 			fieldType:  nodeAdded,

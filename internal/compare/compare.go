@@ -7,18 +7,18 @@ import (
 	"slices"
 )
 
-type Changes int
+type Change int
 
 const (
-	NoChanges Changes = iota
+	Unchanged Change = iota
 	Added
 	Deleted
 )
 
 type Diff struct {
-	Change Changes
-	Key    string
-	Value  any
+	Kind  Change
+	Key   string
+	Value any
 }
 
 func Compare(firstFile, secondFile map[string]any) []Diff {
@@ -58,15 +58,15 @@ func compareKey(key string, firstFile, secondFile map[string]any) []Diff {
 }
 
 func added(key string, value any) Diff {
-	return Diff{Change: Added, Key: key, Value: expand(value)}
+	return Diff{Kind: Added, Key: key, Value: expand(value)}
 }
 
 func deleted(key string, value any) Diff {
-	return Diff{Change: Deleted, Key: key, Value: expand(value)}
+	return Diff{Kind: Deleted, Key: key, Value: expand(value)}
 }
 
 func unchanged(key string, value any) Diff {
-	return Diff{Change: NoChanges, Key: key, Value: value}
+	return Diff{Kind: Unchanged, Key: key, Value: value}
 }
 
 func expand(value any) any {

@@ -13,7 +13,7 @@ func writeStylish(builder *strings.Builder, diffs []compare.Diff, level int) {
 
 	entryIndent := strings.Repeat(indentUnit, level) + "  "
 	for _, diff := range diffs {
-		fmt.Fprintf(builder, "%s%s %s: ", entryIndent, operationStylish(diff.Change), diff.Key)
+		fmt.Fprintf(builder, "%s%s %s: ", entryIndent, operationStylish(diff.Kind), diff.Key)
 
 		if children, isNested := diff.Value.([]compare.Diff); isNested {
 			writeStylish(builder, children, level+1)
@@ -25,13 +25,13 @@ func writeStylish(builder *strings.Builder, diffs []compare.Diff, level int) {
 	fmt.Fprintf(builder, "%s}\n", strings.Repeat(indentUnit, level))
 }
 
-func operationStylish(change compare.Changes) string {
-	switch change {
+func operationStylish(kind compare.Change) string {
+	switch kind {
 	case compare.Added:
 		return "+"
 	case compare.Deleted:
 		return "-"
-	case compare.NoChanges:
+	case compare.Unchanged:
 		return " "
 	}
 

@@ -65,7 +65,7 @@ func mergeUpdates(diffs []compare.Diff) []mergedDiff {
 	for index := 0; index < len(diffs); index++ {
 		diff := diffs[index]
 
-		if diff.Change == compare.Deleted && index+1 < len(diffs) &&
+		if diff.Kind == compare.Deleted && index+1 < len(diffs) &&
 			isUpdatedTo(diffs[index+1], diff.Key) {
 			merged = append(merged, mergedDiff{Diff: diff, newValue: diffs[index+1].Value, updated: true})
 			index++
@@ -80,5 +80,5 @@ func mergeUpdates(diffs []compare.Diff) []mergedDiff {
 }
 
 func isUpdatedTo(next compare.Diff, key string) bool {
-	return next.Change == compare.Added && next.Key == key
+	return next.Kind == compare.Added && next.Key == key
 }
