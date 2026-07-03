@@ -46,9 +46,9 @@ func NewCommand() *cli.Command {
 						return nil
 					}
 
-					return cli.Exit(fmt.Errorf("%w: %q (supported: %s)",
-						formatters.ErrUnsupportedFormat, value,
-						strings.Join(formatters.SupportedNames(), ", ")), exitUsage)
+					return fmt.Errorf("%w (supported: %s)",
+						formatters.ErrUnsupportedFormat,
+						strings.Join(formatters.SupportedNames(), ", "))
 				},
 				Destination: &format,
 			},
