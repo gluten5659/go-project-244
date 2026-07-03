@@ -5,7 +5,7 @@
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=gluten5659_go-project-244&metric=coverage)](https://sonarcloud.io/summary/new_code?id=gluten5659_go-project-244)
 
 Compare two config files and see what changed. Works with JSON and YAML,
-handles nested structures, and prints the diff in `stylish` or `plain` format.
+handles nested structures, and prints the diff in `stylish`, `plain`, or `json` format.
 
 ## Demo
 
@@ -31,7 +31,7 @@ Default format is `stylish`:
 gendiff sample/before.json sample/after.json
 ```
 
-Switch the format with `--format` (or `-f`) — `stylish` or `plain`:
+Switch the format with `--format` (or `-f`) — `stylish`, `plain`, or `json`:
 
 ```bash
 gendiff --format plain sample/before.json sample/after.json
