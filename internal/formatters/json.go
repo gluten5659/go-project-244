@@ -23,8 +23,8 @@ const (
 	nodeNested    = "nested"
 )
 
-func writeJSON(builder *strings.Builder, diffs []compare.Diff) error {
-	document := map[string]any{fieldDiff: jsonNodes(diffs)}
+func writeJSON(builder *strings.Builder, nodes []compare.Node) error {
+	document := map[string]any{fieldDiff: jsonNodes(nodes)}
 
 	encoded, err := json.MarshalIndent(document, "", "  ")
 	if err != nil {
@@ -36,73 +36,49 @@ func writeJSON(builder *strings.Builder, diffs []compare.Diff) error {
 	return nil
 }
 
-func jsonNodes(diffs []compare.Diff) []map[string]any {
-	merged := mergeUpdates(diffs)
-
-	nodes := make([]map[string]any, 0, len(merged))
-	for _, entry := range merged {
-		if entry.updated {
-			nodes = append(nodes, updatedNode(entry.Key, entry.Value, entry.newValue))
-
-			continue
-		}
-
-		nodes = append(nodes, changeNode(entry.Diff))
+func jsonNodes(nodes []compare.Node) []map[string]any {
+	encoded := make([]map[string]any, 0, len(nodes))
+	for _, node := range nodes {
+		encoded = append(encoded, jsonNode(node))
 	}
 
-	return nodes
+	return encoded
 }
 
-func changeNode(diff compare.Diff) map[string]any {
-	children, isTree := diff.Value.([]compare.Diff)
-
-	switch {
-	case diff.Kind == compare.Unchanged && isTree:
+func jsonNode(node compare.Node) map[string]any {
+	switch node.Kind {
+	case compare.Nested:
 		return map[string]any{
-			fieldKey:      diff.Key,
+			fieldKey:      node.Key,
 			fieldType:     nodeNested,
-			fieldChildren: jsonNodes(children),
+			fieldChildren: jsonNodes(node.Children),
 		}
-	case diff.Kind == compare.Unchanged:
+	case compare.Updated:
 		return map[string]any{
-			fieldKey:   diff.Key,
-			fieldType:  nodeUnchanged,
-			fieldValue: diff.Value,
+			fieldKey:      node.Key,
+			fieldType:     nodeUpdated,
+			fieldOldValue: node.OldValue,
+			fieldNewValue: node.NewValue,
 		}
-	case diff.Kind == compare.Added:
+	case compare.Added:
 		return map[string]any{
-			fieldKey:   diff.Key,
+			fieldKey:   node.Key,
 			fieldType:  nodeAdded,
-			fieldValue: collapse(diff.Value),
+			fieldValue: node.Value,
 		}
-	default:
+	case compare.Deleted:
 		return map[string]any{
-			fieldKey:   diff.Key,
+			fieldKey:   node.Key,
 			fieldType:  nodeRemoved,
-			fieldValue: collapse(diff.Value),
+			fieldValue: node.Value,
+		}
+	case compare.Unchanged:
+		return map[string]any{
+			fieldKey:   node.Key,
+			fieldType:  nodeUnchanged,
+			fieldValue: node.Value,
 		}
 	}
-}
 
-func updatedNode(key string, oldValue, newValue any) map[string]any {
-	return map[string]any{
-		fieldKey:      key,
-		fieldType:     nodeUpdated,
-		fieldOldValue: collapse(oldValue),
-		fieldNewValue: collapse(newValue),
-	}
-}
-
-func collapse(value any) any {
-	children, isTree := value.([]compare.Diff)
-	if !isTree {
-		return value
-	}
-
-	object := make(map[string]any, len(children))
-	for _, child := range children {
-		object[child.Key] = collapse(child.Value)
-	}
-
-	return object
+	return nil
 }

@@ -6,27 +6,28 @@ import (
 	"strings"
 )
 
-func writePlain(builder *strings.Builder, diffs []compare.Diff, parentPath string) {
-	for _, entry := range mergeUpdates(diffs) {
-		path := plainPath(parentPath, entry.Key)
+func writePlainRoot(builder *strings.Builder, nodes []compare.Node) error {
+	writePlain(builder, nodes, "")
 
-		switch {
-		case entry.updated:
+	return nil
+}
+
+func writePlain(builder *strings.Builder, nodes []compare.Node, parentPath string) {
+	for _, node := range nodes {
+		path := plainPath(parentPath, node.Key)
+
+		switch node.Kind {
+		case compare.Nested:
+			writePlain(builder, node.Children, path)
+		case compare.Updated:
 			fmt.Fprintf(builder, "Property '%s' was updated. From %s to %s\n",
-				path, plainValue(entry.Value), plainValue(entry.newValue))
-		case entry.Kind == compare.Unchanged:
-			if children, isNested := entry.Value.([]compare.Diff); isNested {
-				writePlain(builder, children, path)
-			}
-		case entry.Kind == compare.Deleted:
+				path, plainValue(node.OldValue), plainValue(node.NewValue))
+		case compare.Deleted:
 			fmt.Fprintf(builder, "Property '%s' was removed\n", path)
-		case entry.Kind == compare.Added:
-			fmt.Fprintf(
-				builder,
-				"Property '%s' was added with value: %s\n",
-				path,
-				plainValue(entry.Value),
-			)
+		case compare.Added:
+			fmt.Fprintf(builder, "Property '%s' was added with value: %s\n",
+				path, plainValue(node.Value))
+		case compare.Unchanged:
 		}
 	}
 }
@@ -41,7 +42,7 @@ func plainPath(parentPath, key string) string {
 
 func plainValue(value any) string {
 	switch typed := value.(type) {
-	case []compare.Diff:
+	case map[string]any:
 		return "[complex value]"
 	case nil:
 		return "null"

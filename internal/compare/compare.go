@@ -7,78 +7,62 @@ import (
 	"slices"
 )
 
-type Change int
+type Kind int
 
 const (
-	Unchanged Change = iota
+	Unchanged Kind = iota
 	Added
 	Deleted
+	Updated
+	Nested
 )
 
-type Diff struct {
-	Kind  Change
-	Key   string
-	Value any
+type Node struct {
+	Key      string
+	Kind     Kind
+	Value    any
+	OldValue any
+	NewValue any
+	Children []Node
 }
 
-func Compare(firstFile, secondFile map[string]any) []Diff {
-	keys := sortedKeys(firstFile, secondFile)
+func Compare(firstFile, secondFile map[string]any) []Node {
+	keys := collectSortedKeys(firstFile, secondFile)
 
-	diff := make([]Diff, 0, len(keys))
+	nodes := make([]Node, 0, len(keys))
 	for _, key := range keys {
-		diff = append(diff, compareKey(key, firstFile, secondFile)...)
+		nodes = append(nodes, compareKey(key, firstFile, secondFile))
 	}
 
-	return diff
+	return nodes
 }
 
-func compareKey(key string, firstFile, secondFile map[string]any) []Diff {
-	firstFileValue, isKeyInFirstFile := firstFile[key]
-	secondFileValue, isKeyInSecondFile := secondFile[key]
+func compareKey(key string, firstFile, secondFile map[string]any) Node {
+	firstValue, isKeyInFirstFile := firstFile[key]
+	secondValue, isKeyInSecondFile := secondFile[key]
 
 	switch {
 	case !isKeyInFirstFile:
-		return []Diff{added(key, secondFileValue)}
+		return Node{Key: key, Kind: Added, Value: secondValue}
 	case !isKeyInSecondFile:
-		return []Diff{deleted(key, firstFileValue)}
+		return Node{Key: key, Kind: Deleted, Value: firstValue}
 	}
 
-	firstFileValueMap, isFirstValueMap := firstFileValue.(map[string]any)
-	secondFileValueMap, isSecondValueMap := secondFileValue.(map[string]any)
+	firstObject, isFirstObject := firstValue.(map[string]any)
+	secondObject, isSecondObject := secondValue.(map[string]any)
 
-	if isFirstValueMap && isSecondValueMap {
-		return []Diff{unchanged(key, Compare(firstFileValueMap, secondFileValueMap))}
+	if isFirstObject && isSecondObject {
+		return Node{Key: key, Kind: Nested, Children: Compare(firstObject, secondObject)}
 	}
 
-	if reflect.DeepEqual(firstFileValue, secondFileValue) {
-		return []Diff{unchanged(key, firstFileValue)}
+	if reflect.DeepEqual(firstValue, secondValue) {
+		return Node{Key: key, Kind: Unchanged, Value: firstValue}
 	}
 
-	return []Diff{deleted(key, firstFileValue), added(key, secondFileValue)}
+	return Node{Key: key, Kind: Updated, OldValue: firstValue, NewValue: secondValue}
 }
 
-func added(key string, value any) Diff {
-	return Diff{Kind: Added, Key: key, Value: expand(value)}
-}
-
-func deleted(key string, value any) Diff {
-	return Diff{Kind: Deleted, Key: key, Value: expand(value)}
-}
-
-func unchanged(key string, value any) Diff {
-	return Diff{Kind: Unchanged, Key: key, Value: value}
-}
-
-func expand(value any) any {
-	valueMap, isValueMap := value.(map[string]any)
-	if !isValueMap {
-		return value
-	}
-
-	return Compare(valueMap, valueMap)
-}
-
-func sortedKeys[Key cmp.Ordered, Value any](sources ...map[Key]Value) []Key {
+func collectSortedKeys[Key cmp.Ordered, Value any](sources ...map[Key]Value) []Key {
 	capacity := 0
 	for _, source := range sources {
 		capacity += len(source)

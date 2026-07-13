@@ -4,8 +4,6 @@ import (
 	"code/internal/compare"
 	"errors"
 	"fmt"
-	"maps"
-	"slices"
 	"strings"
 )
 
@@ -17,25 +15,30 @@ const (
 
 var ErrUnsupportedFormat = errors.New("unsupported output format")
 
-type writer func(*strings.Builder, []compare.Diff) error
+type writer func(*strings.Builder, []compare.Node) error
 
-func writers() map[string]writer {
-	return map[string]writer{
-		Stylish: writeStylishRoot,
-		Plain:   writePlainRoot,
-		JSON:    writeJSON,
+type namedFormatter struct {
+	name  string
+	write writer
+}
+
+func supportedFormatters() []namedFormatter {
+	return []namedFormatter{
+		{name: JSON, write: writeJSON},
+		{name: Plain, write: writePlainRoot},
+		{name: Stylish, write: writeStylishRoot},
 	}
 }
 
-func Format(diffs []compare.Diff, name string) (string, error) {
-	write, isSupported := writers()[name]
-	if !isSupported {
+func Format(nodes []compare.Node, name string) (string, error) {
+	write := writerFor(name)
+	if write == nil {
 		return "", fmt.Errorf("%w: %q", ErrUnsupportedFormat, name)
 	}
 
 	builder := strings.Builder{}
 
-	err := write(&builder, diffs)
+	err := write(&builder, nodes)
 	if err != nil {
 		return "", err
 	}
@@ -43,52 +46,23 @@ func Format(diffs []compare.Diff, name string) (string, error) {
 	return strings.TrimRight(builder.String(), "\n"), nil
 }
 
-func SupportedNames() []string {
-	names := slices.Collect(maps.Keys(writers()))
-	slices.Sort(names)
-
-	return names
-}
-
-func writeStylishRoot(builder *strings.Builder, diffs []compare.Diff) error {
-	writeStylish(builder, diffs, 0)
-
-	return nil
-}
-
-func writePlainRoot(builder *strings.Builder, diffs []compare.Diff) error {
-	writePlain(builder, diffs, "")
-
-	return nil
-}
-
-type mergedDiff struct {
-	compare.Diff
-
-	newValue any
-	updated  bool
-}
-
-func mergeUpdates(diffs []compare.Diff) []mergedDiff {
-	merged := make([]mergedDiff, 0, len(diffs))
-
-	for index := 0; index < len(diffs); index++ {
-		diff := diffs[index]
-
-		if diff.Kind == compare.Deleted && index+1 < len(diffs) &&
-			isUpdatedTo(diffs[index+1], diff.Key) {
-			merged = append(merged, mergedDiff{Diff: diff, newValue: diffs[index+1].Value, updated: true})
-			index++
-
-			continue
+func writerFor(name string) writer {
+	for _, formatter := range supportedFormatters() {
+		if formatter.name == name {
+			return formatter.write
 		}
-
-		merged = append(merged, mergedDiff{Diff: diff})
 	}
 
-	return merged
+	return nil
 }
 
-func isUpdatedTo(next compare.Diff, key string) bool {
-	return next.Kind == compare.Added && next.Key == key
+func SupportedNames() []string {
+	available := supportedFormatters()
+
+	names := make([]string, 0, len(available))
+	for _, formatter := range available {
+		names = append(names, formatter.name)
+	}
+
+	return names
 }
