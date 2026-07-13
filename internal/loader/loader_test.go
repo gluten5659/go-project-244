@@ -1,9 +1,7 @@
 package loader_test
 
 import (
-	"code/internal/files"
 	"code/internal/loader"
-	"code/internal/parser"
 	"code/internal/testutil"
 	"io/fs"
 	"path/filepath"
@@ -13,47 +11,121 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	jsonConfigName = "config.json"
+	yamlConfigName = "config.yaml"
+	hostKey        = "host"
+	hostValue      = "hexlet.io"
+	settingsKey    = "settings"
+	timeoutKey     = "timeout"
+)
+
 func TestFromFileParsesContent(t *testing.T) {
 	t.Parallel()
 
-	path := testutil.WriteTempFile(t, `{"host": "hexlet.io", "timeout": 50}`)
+	testCases := []struct {
+		name          string
+		fileName      string
+		content       string
+		expectedValue map[string]any
+	}{
+		{
+			name:          "json flat object keeps numbers as float64",
+			fileName:      jsonConfigName,
+			content:       `{"host": "hexlet.io", "timeout": 50}`,
+			expectedValue: map[string]any{hostKey: hostValue, timeoutKey: float64(50)},
+		},
+		{
+			name:          "json empty object",
+			fileName:      jsonConfigName,
+			content:       `{}`,
+			expectedValue: map[string]any{},
+		},
+		{
+			name:          "json nested object",
+			fileName:      jsonConfigName,
+			content:       `{"settings": {"timeout": 50}}`,
+			expectedValue: map[string]any{settingsKey: map[string]any{timeoutKey: float64(50)}},
+		},
+		{
+			name:          "yaml flat object parses numbers as int",
+			fileName:      yamlConfigName,
+			content:       "host: hexlet.io\ntimeout: 50",
+			expectedValue: map[string]any{hostKey: hostValue, timeoutKey: 50},
+		},
+		{
+			name:          "yml extension parses like yaml",
+			fileName:      "config.yml",
+			content:       "host: hexlet.io\ntimeout: 50",
+			expectedValue: map[string]any{hostKey: hostValue, timeoutKey: 50},
+		},
+		{
+			name:          "yaml nested object",
+			fileName:      yamlConfigName,
+			content:       "settings:\n  timeout: 50",
+			expectedValue: map[string]any{settingsKey: map[string]any{timeoutKey: 50}},
+		},
+		{
+			name:          "yaml non-string keys normalize into string-keyed maps",
+			fileName:      yamlConfigName,
+			content:       "settings:\n  1: one\n  2: two",
+			expectedValue: map[string]any{settingsKey: map[string]any{"1": "one", "2": "two"}},
+		},
+	}
 
-	values, err := loader.FromFile(path)
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
 
-	require.NoError(t, err)
-	assert.Equal(t, map[string]any{"host": "hexlet.io", "timeout": float64(50)}, values)
+			path := testutil.WriteTempFileNamed(t, testCase.fileName, testCase.content)
+
+			values, err := loader.FromFile(path)
+
+			require.NoError(t, err)
+			assert.Equal(t, testCase.expectedValue, values)
+		})
+	}
 }
 
-func TestFromFileMissingFile(t *testing.T) {
+func TestFromFileRejectsUnparsableContent(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name     string
+		fileName string
+		content  string
+	}{
+		{name: "malformed json", fileName: jsonConfigName, content: `{`},
+		{name: "json array is not an object", fileName: jsonConfigName, content: `[1, 2, 3]`},
+		{name: "empty json input", fileName: jsonConfigName, content: ``},
+		{name: "yaml scalar is not a mapping", fileName: yamlConfigName, content: `just a string`},
+		{name: "malformed yaml", fileName: yamlConfigName, content: `key: "unterminated`},
+		{name: "unsupported extension", fileName: "config.txt", content: `host: hexlet.io`},
+		{name: "no extension", fileName: "config", content: `{}`},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+
+			path := testutil.WriteTempFileNamed(t, testCase.fileName, testCase.content)
+
+			values, err := loader.FromFile(path)
+
+			require.ErrorIs(t, err, loader.ErrParse)
+			assert.Nil(t, values)
+		})
+	}
+}
+
+func TestFromFileReportsMissingFile(t *testing.T) {
 	t.Parallel()
 
 	missingPath := filepath.Join(t.TempDir(), "missing.json")
 
 	values, err := loader.FromFile(missingPath)
 
-	require.ErrorIs(t, err, files.ErrRead)
+	require.ErrorIs(t, err, loader.ErrRead)
 	require.ErrorIs(t, err, fs.ErrNotExist)
 	assert.Nil(t, values)
-}
-
-func TestFromFileMalformedContent(t *testing.T) {
-	t.Parallel()
-
-	path := testutil.WriteTempFile(t, `{`)
-
-	values, err := loader.FromFile(path)
-
-	require.ErrorIs(t, err, parser.ErrParse)
-	assert.Nil(t, values)
-}
-
-func TestFromFileParsesYAMLByExtension(t *testing.T) {
-	t.Parallel()
-
-	path := testutil.WriteTempFileNamed(t, "config.yaml", "host: hexlet.io\ntimeout: 50")
-
-	values, err := loader.FromFile(path)
-
-	require.NoError(t, err)
-	assert.Equal(t, map[string]any{"host": "hexlet.io", "timeout": 50}, values)
 }
