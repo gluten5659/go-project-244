@@ -19,8 +19,8 @@ type_and_run() {
 }
 
 type_and_run 'bin/gendiff --help'
-type_and_run 'bin/gendiff sample/before.json sample/after.json'
-type_and_run 'bin/gendiff --format plain sample/before.json sample/after.json'
-type_and_run 'bin/gendiff --format json sample/before.json sample/after.json'
-type_and_run 'bin/gendiff sample/before.yaml sample/after.yaml'
-type_and_run 'bin/gendiff no-such-file sample/after.json; echo "exit code: $?"'
+type_and_run 'bin/gendiff examples/before.json examples/after.json'
+type_and_run 'bin/gendiff --format plain examples/before.json examples/after.json'
+type_and_run 'bin/gendiff --format json examples/before.json examples/after.json'
+type_and_run 'bin/gendiff examples/before.yaml examples/after.yaml'
+type_and_run 'bin/gendiff no-such-file examples/after.json; echo "exit code: $?"'
