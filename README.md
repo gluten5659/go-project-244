@@ -22,26 +22,26 @@ You get the binary at `bin/gendiff`.
 ## Usage
 
 ```bash
-gendiff [--format <fmt>] <first-file> <second-file>
+bin/gendiff [--format <fmt>] <first-file> <second-file>
 ```
 
 Default format is `stylish`:
 
 ```bash
-gendiff sample/before.json sample/after.json
+bin/gendiff examples/before.json examples/after.json
 ```
 
 Switch the format with `--format` (or `-f`) — `stylish`, `plain`, or `json`:
 
 ```bash
-gendiff --format plain sample/before.json sample/after.json
+bin/gendiff --format plain examples/before.json examples/after.json
 ```
 
 The `json` format is machine-readable — the whole diff tree is wrapped in a
 `diff` array, and every node carries its `key`, `type`, and value:
 
 ```bash
-gendiff --format json sample/before.json sample/after.json
+bin/gendiff --format json examples/before.json examples/after.json
 ```
 
 ```json
@@ -97,7 +97,7 @@ gendiff --format json sample/before.json sample/after.json
 JSON and YAML mix freely, so the two files don't have to share a format:
 
 ```bash
-gendiff sample/before.yaml sample/after.yaml
+bin/gendiff examples/before.yaml examples/after.yaml
 ```
 
 ## Exit codes
