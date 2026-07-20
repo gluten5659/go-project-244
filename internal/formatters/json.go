@@ -7,14 +7,6 @@ import (
 )
 
 const (
-	fieldKey      = "key"
-	fieldType     = "type"
-	fieldValue    = "value"
-	fieldOldValue = "oldValue"
-	fieldNewValue = "newValue"
-	fieldChildren = "children"
-	fieldDiff     = "diff"
-
 	nodeAdded     = "added"
 	nodeRemoved   = "removed"
 	nodeUpdated   = "updated"
@@ -22,12 +14,33 @@ const (
 	nodeNested    = "nested"
 )
 
+type jsonDiff struct {
+	Diff []any `json:"diff"`
+}
+
+type jsonValueNode struct {
+	Key   string `json:"key"`
+	Type  string `json:"type"`
+	Value any    `json:"value"`
+}
+
+type jsonUpdatedNode struct {
+	Key      string `json:"key"`
+	NewValue any    `json:"newValue"`
+	OldValue any    `json:"oldValue"`
+	Type     string `json:"type"`
+}
+
+type jsonNestedNode struct {
+	Children []any  `json:"children"`
+	Key      string `json:"key"`
+	Type     string `json:"type"`
+}
+
 type jsonFormatter struct{}
 
 func (jsonFormatter) Format(nodes []diff.Node) (string, error) {
-	document := map[string]any{fieldDiff: jsonNodes(nodes)}
-
-	encoded, err := json.MarshalIndent(document, "", "  ")
+	encoded, err := json.MarshalIndent(jsonDiff{Diff: jsonNodes(nodes)}, "", "  ")
 	if err != nil {
 		return "", fmt.Errorf("marshal json diff: %w", err)
 	}
@@ -35,8 +48,8 @@ func (jsonFormatter) Format(nodes []diff.Node) (string, error) {
 	return string(encoded), nil
 }
 
-func jsonNodes(nodes []diff.Node) []map[string]any {
-	encoded := make([]map[string]any, 0, len(nodes))
+func jsonNodes(nodes []diff.Node) []any {
+	encoded := make([]any, 0, len(nodes))
 	for _, node := range nodes {
 		encoded = append(encoded, jsonNode(node))
 	}
@@ -44,39 +57,23 @@ func jsonNodes(nodes []diff.Node) []map[string]any {
 	return encoded
 }
 
-func jsonNode(node diff.Node) map[string]any {
+func jsonNode(node diff.Node) any {
 	switch node.Kind {
 	case diff.Nested:
-		return map[string]any{
-			fieldKey:      node.Key,
-			fieldType:     nodeNested,
-			fieldChildren: jsonNodes(node.Children),
-		}
+		return jsonNestedNode{Children: jsonNodes(node.Children), Key: node.Key, Type: nodeNested}
 	case diff.Updated:
-		return map[string]any{
-			fieldKey:      node.Key,
-			fieldType:     nodeUpdated,
-			fieldOldValue: node.OldValue,
-			fieldNewValue: node.NewValue,
+		return jsonUpdatedNode{
+			Key:      node.Key,
+			NewValue: node.NewValue,
+			OldValue: node.OldValue,
+			Type:     nodeUpdated,
 		}
 	case diff.Added:
-		return map[string]any{
-			fieldKey:   node.Key,
-			fieldType:  nodeAdded,
-			fieldValue: node.Value,
-		}
+		return jsonValueNode{Key: node.Key, Type: nodeAdded, Value: node.Value}
 	case diff.Deleted:
-		return map[string]any{
-			fieldKey:   node.Key,
-			fieldType:  nodeRemoved,
-			fieldValue: node.Value,
-		}
+		return jsonValueNode{Key: node.Key, Type: nodeRemoved, Value: node.Value}
 	case diff.Unchanged:
-		return map[string]any{
-			fieldKey:   node.Key,
-			fieldType:  nodeUnchanged,
-			fieldValue: node.Value,
-		}
+		return jsonValueNode{Key: node.Key, Type: nodeUnchanged, Value: node.Value}
 	}
 
 	return nil
