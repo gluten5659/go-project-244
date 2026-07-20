@@ -3,7 +3,7 @@ package cliapp
 import (
 	"code"
 	"code/internal/formatters"
-	"code/internal/loader"
+	"code/internal/parser"
 	"context"
 	"errors"
 	"fmt"
@@ -92,9 +92,9 @@ func exitCodeFor(err error) int {
 		return exitNoInput
 	case errors.Is(err, fs.ErrPermission):
 		return exitPermission
-	case errors.Is(err, loader.ErrParse):
+	case errors.Is(err, parser.ErrParse):
 		return exitDataErr
-	case errors.Is(err, loader.ErrRead):
+	case errors.Is(err, parser.ErrRead):
 		return exitIOErr
 	default:
 		return exitGeneric

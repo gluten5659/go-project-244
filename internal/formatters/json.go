@@ -1,7 +1,7 @@
 package formatters
 
 import (
-	"code/internal/compare"
+	"code/internal/diff"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -23,7 +23,7 @@ const (
 	nodeNested    = "nested"
 )
 
-func writeJSON(builder *strings.Builder, nodes []compare.Node) error {
+func writeJSON(builder *strings.Builder, nodes []diff.Node) error {
 	document := map[string]any{fieldDiff: jsonNodes(nodes)}
 
 	encoded, err := json.MarshalIndent(document, "", "  ")
@@ -36,7 +36,7 @@ func writeJSON(builder *strings.Builder, nodes []compare.Node) error {
 	return nil
 }
 
-func jsonNodes(nodes []compare.Node) []map[string]any {
+func jsonNodes(nodes []diff.Node) []map[string]any {
 	encoded := make([]map[string]any, 0, len(nodes))
 	for _, node := range nodes {
 		encoded = append(encoded, jsonNode(node))
@@ -45,34 +45,34 @@ func jsonNodes(nodes []compare.Node) []map[string]any {
 	return encoded
 }
 
-func jsonNode(node compare.Node) map[string]any {
+func jsonNode(node diff.Node) map[string]any {
 	switch node.Kind {
-	case compare.Nested:
+	case diff.Nested:
 		return map[string]any{
 			fieldKey:      node.Key,
 			fieldType:     nodeNested,
 			fieldChildren: jsonNodes(node.Children),
 		}
-	case compare.Updated:
+	case diff.Updated:
 		return map[string]any{
 			fieldKey:      node.Key,
 			fieldType:     nodeUpdated,
 			fieldOldValue: node.OldValue,
 			fieldNewValue: node.NewValue,
 		}
-	case compare.Added:
+	case diff.Added:
 		return map[string]any{
 			fieldKey:   node.Key,
 			fieldType:  nodeAdded,
 			fieldValue: node.Value,
 		}
-	case compare.Deleted:
+	case diff.Deleted:
 		return map[string]any{
 			fieldKey:   node.Key,
 			fieldType:  nodeRemoved,
 			fieldValue: node.Value,
 		}
-	case compare.Unchanged:
+	case diff.Unchanged:
 		return map[string]any{
 			fieldKey:   node.Key,
 			fieldType:  nodeUnchanged,

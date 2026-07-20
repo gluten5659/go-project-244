@@ -1,7 +1,7 @@
 package formatters
 
 import (
-	"code/internal/compare"
+	"code/internal/diff"
 	"errors"
 	"fmt"
 	"strings"
@@ -15,7 +15,7 @@ const (
 
 var ErrUnsupportedFormat = errors.New("unsupported output format")
 
-type writer func(*strings.Builder, []compare.Node) error
+type writer func(*strings.Builder, []diff.Node) error
 
 type namedFormatter struct {
 	name  string
@@ -30,7 +30,7 @@ func supportedFormatters() []namedFormatter {
 	}
 }
 
-func Format(nodes []compare.Node, name string) (string, error) {
+func Format(nodes []diff.Node, name string) (string, error) {
 	write := writerFor(name)
 	if write == nil {
 		return "", fmt.Errorf("%w: %q", ErrUnsupportedFormat, name)

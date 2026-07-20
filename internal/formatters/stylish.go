@@ -1,7 +1,7 @@
 package formatters
 
 import (
-	"code/internal/compare"
+	"code/internal/diff"
 	"fmt"
 	"maps"
 	"slices"
@@ -10,13 +10,13 @@ import (
 
 const indentUnit = "    "
 
-func writeStylishRoot(builder *strings.Builder, nodes []compare.Node) error {
+func writeStylishRoot(builder *strings.Builder, nodes []diff.Node) error {
 	writeStylish(builder, nodes, 0)
 
 	return nil
 }
 
-func writeStylish(builder *strings.Builder, nodes []compare.Node, level int) {
+func writeStylish(builder *strings.Builder, nodes []diff.Node, level int) {
 	fmt.Fprintln(builder, "{")
 
 	for _, node := range nodes {
@@ -26,23 +26,23 @@ func writeStylish(builder *strings.Builder, nodes []compare.Node, level int) {
 	fmt.Fprintf(builder, "%s}\n", strings.Repeat(indentUnit, level))
 }
 
-func writeStylishNode(builder *strings.Builder, node compare.Node, level int) {
+func writeStylishNode(builder *strings.Builder, node diff.Node, level int) {
 	switch node.Kind {
-	case compare.Nested:
+	case diff.Nested:
 		writeStylishKey(builder, level, " ", node.Key)
 		writeStylish(builder, node.Children, level+1)
-	case compare.Updated:
+	case diff.Updated:
 		writeStylishKey(builder, level, "-", node.Key)
 		writeStylishValue(builder, node.OldValue, level)
 		writeStylishKey(builder, level, "+", node.Key)
 		writeStylishValue(builder, node.NewValue, level)
-	case compare.Added:
+	case diff.Added:
 		writeStylishKey(builder, level, "+", node.Key)
 		writeStylishValue(builder, node.Value, level)
-	case compare.Deleted:
+	case diff.Deleted:
 		writeStylishKey(builder, level, "-", node.Key)
 		writeStylishValue(builder, node.Value, level)
-	case compare.Unchanged:
+	case diff.Unchanged:
 		writeStylishKey(builder, level, " ", node.Key)
 		writeStylishValue(builder, node.Value, level)
 	}

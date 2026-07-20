@@ -1,33 +1,33 @@
 package formatters
 
 import (
-	"code/internal/compare"
+	"code/internal/diff"
 	"fmt"
 	"strings"
 )
 
-func writePlainRoot(builder *strings.Builder, nodes []compare.Node) error {
+func writePlainRoot(builder *strings.Builder, nodes []diff.Node) error {
 	writePlain(builder, nodes, "")
 
 	return nil
 }
 
-func writePlain(builder *strings.Builder, nodes []compare.Node, parentPath string) {
+func writePlain(builder *strings.Builder, nodes []diff.Node, parentPath string) {
 	for _, node := range nodes {
 		path := plainPath(parentPath, node.Key)
 
 		switch node.Kind {
-		case compare.Nested:
+		case diff.Nested:
 			writePlain(builder, node.Children, path)
-		case compare.Updated:
+		case diff.Updated:
 			fmt.Fprintf(builder, "Property '%s' was updated. From %s to %s\n",
 				path, plainValue(node.OldValue), plainValue(node.NewValue))
-		case compare.Deleted:
+		case diff.Deleted:
 			fmt.Fprintf(builder, "Property '%s' was removed\n", path)
-		case compare.Added:
+		case diff.Added:
 			fmt.Fprintf(builder, "Property '%s' was added with value: %s\n",
 				path, plainValue(node.Value))
-		case compare.Unchanged:
+		case diff.Unchanged:
 		}
 	}
 }

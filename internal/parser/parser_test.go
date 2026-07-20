@@ -1,7 +1,7 @@
-package loader_test
+package parser_test
 
 import (
-	"code/internal/loader"
+	"code/internal/parser"
 	"code/internal/testutil"
 	"io/fs"
 	"path/filepath"
@@ -20,7 +20,7 @@ const (
 	timeoutKey     = "timeout"
 )
 
-func TestFromFileParsesContent(t *testing.T) {
+func TestParseFileParsesContent(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -33,7 +33,7 @@ func TestFromFileParsesContent(t *testing.T) {
 			name:          "json flat object normalizes numbers",
 			fileName:      jsonConfigName,
 			content:       `{"host": "hexlet.io", "timeout": 50}`,
-			expectedValue: map[string]any{hostKey: hostValue, timeoutKey: loader.IntNumber(50)},
+			expectedValue: map[string]any{hostKey: hostValue, timeoutKey: parser.IntNumber(50)},
 		},
 		{
 			name:          "json empty object",
@@ -45,25 +45,25 @@ func TestFromFileParsesContent(t *testing.T) {
 			name:          "json nested object",
 			fileName:      jsonConfigName,
 			content:       `{"settings": {"timeout": 50}}`,
-			expectedValue: map[string]any{settingsKey: map[string]any{timeoutKey: loader.IntNumber(50)}},
+			expectedValue: map[string]any{settingsKey: map[string]any{timeoutKey: parser.IntNumber(50)}},
 		},
 		{
 			name:          "yaml flat object normalizes numbers the same as json",
 			fileName:      yamlConfigName,
 			content:       "host: hexlet.io\ntimeout: 50",
-			expectedValue: map[string]any{hostKey: hostValue, timeoutKey: loader.IntNumber(50)},
+			expectedValue: map[string]any{hostKey: hostValue, timeoutKey: parser.IntNumber(50)},
 		},
 		{
 			name:          "yml extension parses like yaml",
 			fileName:      "config.yml",
 			content:       "host: hexlet.io\ntimeout: 50",
-			expectedValue: map[string]any{hostKey: hostValue, timeoutKey: loader.IntNumber(50)},
+			expectedValue: map[string]any{hostKey: hostValue, timeoutKey: parser.IntNumber(50)},
 		},
 		{
 			name:          "yaml nested object",
 			fileName:      yamlConfigName,
 			content:       "settings:\n  timeout: 50",
-			expectedValue: map[string]any{settingsKey: map[string]any{timeoutKey: loader.IntNumber(50)}},
+			expectedValue: map[string]any{settingsKey: map[string]any{timeoutKey: parser.IntNumber(50)}},
 		},
 		{
 			name:          "yaml non-string keys normalize into string-keyed maps",
@@ -79,7 +79,7 @@ func TestFromFileParsesContent(t *testing.T) {
 
 			path := testutil.WriteTempFileNamed(t, testCase.fileName, testCase.content)
 
-			values, err := loader.FromFile(path)
+			values, err := parser.ParseFile(path)
 
 			require.NoError(t, err)
 			assert.Equal(t, testCase.expectedValue, values)
@@ -87,13 +87,13 @@ func TestFromFileParsesContent(t *testing.T) {
 	}
 }
 
-func TestFromFileNormalizesNumbersToACommonForm(t *testing.T) {
+func TestParseFileNormalizesNumbersToACommonForm(t *testing.T) {
 	t.Parallel()
 
 	load := func(tb testing.TB, fileName, content string) map[string]any {
 		tb.Helper()
 
-		values, err := loader.FromFile(testutil.WriteTempFileNamed(tb, fileName, content))
+		values, err := parser.ParseFile(testutil.WriteTempFileNamed(tb, fileName, content))
 		require.NoError(tb, err)
 
 		return values
@@ -123,7 +123,7 @@ func TestFromFileNormalizesNumbersToACommonForm(t *testing.T) {
 		asFloat := load(t, jsonConfigName, `{"timeout": 1.0}`)
 		asInteger := load(t, jsonConfigName, `{"timeout": 1}`)
 
-		assert.Equal(t, map[string]any{timeoutKey: loader.FloatNumber(1.0)}, asFloat)
+		assert.Equal(t, map[string]any{timeoutKey: parser.FloatNumber(1.0)}, asFloat)
 		assert.NotEqual(t, asInteger, asFloat)
 	})
 
@@ -132,11 +132,11 @@ func TestFromFileNormalizesNumbersToACommonForm(t *testing.T) {
 
 		values := load(t, jsonConfigName, `{"id": 9007199254740993}`)
 
-		assert.Equal(t, map[string]any{"id": loader.IntNumber(9007199254740993)}, values)
+		assert.Equal(t, map[string]any{"id": parser.IntNumber(9007199254740993)}, values)
 	})
 }
 
-func TestFromFileRejectsUnparsableContent(t *testing.T) {
+func TestParseFileRejectsUnparsableContent(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -159,22 +159,22 @@ func TestFromFileRejectsUnparsableContent(t *testing.T) {
 
 			path := testutil.WriteTempFileNamed(t, testCase.fileName, testCase.content)
 
-			values, err := loader.FromFile(path)
+			values, err := parser.ParseFile(path)
 
-			require.ErrorIs(t, err, loader.ErrParse)
+			require.ErrorIs(t, err, parser.ErrParse)
 			assert.Nil(t, values)
 		})
 	}
 }
 
-func TestFromFileReportsMissingFile(t *testing.T) {
+func TestParseFileReportsMissingFile(t *testing.T) {
 	t.Parallel()
 
 	missingPath := filepath.Join(t.TempDir(), "missing.json")
 
-	values, err := loader.FromFile(missingPath)
+	values, err := parser.ParseFile(missingPath)
 
-	require.ErrorIs(t, err, loader.ErrRead)
+	require.ErrorIs(t, err, parser.ErrRead)
 	require.ErrorIs(t, err, fs.ErrNotExist)
 	assert.Nil(t, values)
 }

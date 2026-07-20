@@ -1,7 +1,7 @@
 package formatters_test
 
 import (
-	"code/internal/compare"
+	"code/internal/diff"
 	"code/internal/formatters"
 	"testing"
 
@@ -13,7 +13,7 @@ func TestFormatRejectsUnsupportedFormat(t *testing.T) {
 	t.Parallel()
 
 	formatted, err := formatters.Format(
-		[]compare.Node{{Kind: compare.Added, Key: "x", Value: 1}},
+		[]diff.Node{{Kind: diff.Added, Key: "x", Value: 1}},
 		"bogus",
 	)
 

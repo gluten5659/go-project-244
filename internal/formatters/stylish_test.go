@@ -1,7 +1,7 @@
 package formatters_test
 
 import (
-	"code/internal/compare"
+	"code/internal/diff"
 	"code/internal/formatters"
 	"testing"
 
@@ -14,7 +14,7 @@ func TestStylishFormat(t *testing.T) {
 
 	testCases := []struct {
 		name           string
-		nodes          []compare.Node
+		nodes          []diff.Node
 		expectedOutput string
 	}{
 		{
@@ -24,10 +24,10 @@ func TestStylishFormat(t *testing.T) {
 		},
 		{
 			name: "each change kind gets its marker at the root level",
-			nodes: []compare.Node{
-				{Kind: compare.Deleted, Key: "follow", Value: false},
-				{Kind: compare.Unchanged, Key: "host", Value: "hexlet.io"},
-				{Kind: compare.Added, Key: "verbose", Value: true},
+			nodes: []diff.Node{
+				{Kind: diff.Deleted, Key: "follow", Value: false},
+				{Kind: diff.Unchanged, Key: "host", Value: "hexlet.io"},
+				{Kind: diff.Added, Key: "verbose", Value: true},
 			},
 			expectedOutput: "{\n" +
 				"  - follow: false\n" +
@@ -37,13 +37,13 @@ func TestStylishFormat(t *testing.T) {
 		},
 		{
 			name:           "nil value renders as null",
-			nodes:          []compare.Node{{Kind: compare.Added, Key: "setting3", Value: nil}},
+			nodes:          []diff.Node{{Kind: diff.Added, Key: "setting3", Value: nil}},
 			expectedOutput: "{\n  + setting3: null\n}",
 		},
 		{
 			name: "updated value prints the old marker then the new one",
-			nodes: []compare.Node{
-				{Kind: compare.Updated, Key: "timeout", OldValue: 50, NewValue: 20},
+			nodes: []diff.Node{
+				{Kind: diff.Updated, Key: "timeout", OldValue: 50, NewValue: 20},
 			},
 			expectedOutput: "{\n" +
 				"  - timeout: 50\n" +
@@ -52,8 +52,8 @@ func TestStylishFormat(t *testing.T) {
 		},
 		{
 			name: "an added object renders as a sorted tree of its keys",
-			nodes: []compare.Node{
-				{Kind: compare.Added, Key: "settings", Value: map[string]any{"b": 2, "a": 1}},
+			nodes: []diff.Node{
+				{Kind: diff.Added, Key: "settings", Value: map[string]any{"b": 2, "a": 1}},
 			},
 			expectedOutput: "{\n" +
 				"  + settings: {\n" +
@@ -64,11 +64,11 @@ func TestStylishFormat(t *testing.T) {
 		},
 		{
 			name: "nested children indent by depth",
-			nodes: []compare.Node{
-				{Kind: compare.Nested, Key: "common", Children: []compare.Node{
-					{Kind: compare.Added, Key: "follow", Value: false},
-					{Kind: compare.Nested, Key: "sub", Children: []compare.Node{
-						{Kind: compare.Deleted, Key: "x", Value: 1},
+			nodes: []diff.Node{
+				{Kind: diff.Nested, Key: "common", Children: []diff.Node{
+					{Kind: diff.Added, Key: "follow", Value: false},
+					{Kind: diff.Nested, Key: "sub", Children: []diff.Node{
+						{Kind: diff.Deleted, Key: "x", Value: 1},
 					}},
 				}},
 			},

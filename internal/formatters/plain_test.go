@@ -1,7 +1,7 @@
 package formatters_test
 
 import (
-	"code/internal/compare"
+	"code/internal/diff"
 	"code/internal/formatters"
 	"testing"
 
@@ -14,7 +14,7 @@ func TestPlainFormat(t *testing.T) {
 
 	testCases := []struct {
 		name           string
-		nodes          []compare.Node
+		nodes          []diff.Node
 		expectedOutput string
 	}{
 		{
@@ -24,11 +24,11 @@ func TestPlainFormat(t *testing.T) {
 		},
 		{
 			name: "added values follow the quoting rules",
-			nodes: []compare.Node{
-				{Kind: compare.Added, Key: "flag", Value: false},
-				{Kind: compare.Added, Key: "name", Value: "bob"},
-				{Kind: compare.Added, Key: "opt", Value: nil},
-				{Kind: compare.Added, Key: "empty", Value: ""},
+			nodes: []diff.Node{
+				{Kind: diff.Added, Key: "flag", Value: false},
+				{Kind: diff.Added, Key: "name", Value: "bob"},
+				{Kind: diff.Added, Key: "opt", Value: nil},
+				{Kind: diff.Added, Key: "empty", Value: ""},
 			},
 			expectedOutput: "Property 'flag' was added with value: false\n" +
 				"Property 'name' was added with value: 'bob'\n" +
@@ -37,36 +37,36 @@ func TestPlainFormat(t *testing.T) {
 		},
 		{
 			name:           "removed property is reported",
-			nodes:          []compare.Node{{Kind: compare.Deleted, Key: "old", Value: 1}},
+			nodes:          []diff.Node{{Kind: diff.Deleted, Key: "old", Value: 1}},
 			expectedOutput: "Property 'old' was removed",
 		},
 		{
 			name: "updated property reports both values",
-			nodes: []compare.Node{
-				{Kind: compare.Updated, Key: "x", OldValue: 1, NewValue: 2},
+			nodes: []diff.Node{
+				{Kind: diff.Updated, Key: "x", OldValue: 1, NewValue: 2},
 			},
 			expectedOutput: "Property 'x' was updated. From 1 to 2",
 		},
 		{
 			name: "updated object value collapses to a complex placeholder",
-			nodes: []compare.Node{
-				{Kind: compare.Updated, Key: "nest", OldValue: map[string]any{"k": "v"}, NewValue: "str"},
+			nodes: []diff.Node{
+				{Kind: diff.Updated, Key: "nest", OldValue: map[string]any{"k": "v"}, NewValue: "str"},
 			},
 			expectedOutput: "Property 'nest' was updated. From [complex value] to 'str'",
 		},
 		{
 			name: "added object renders as a complex placeholder",
-			nodes: []compare.Node{
-				{Kind: compare.Added, Key: "obj", Value: map[string]any{"a": 1}},
+			nodes: []diff.Node{
+				{Kind: diff.Added, Key: "obj", Value: map[string]any{"a": 1}},
 			},
 			expectedOutput: "Property 'obj' was added with value: [complex value]",
 		},
 		{
 			name: "nested paths are dotted and unchanged leaves are skipped",
-			nodes: []compare.Node{
-				{Kind: compare.Nested, Key: "common", Children: []compare.Node{
-					{Kind: compare.Unchanged, Key: "keep", Value: "v"},
-					{Kind: compare.Added, Key: "new", Value: true},
+			nodes: []diff.Node{
+				{Kind: diff.Nested, Key: "common", Children: []diff.Node{
+					{Kind: diff.Unchanged, Key: "keep", Value: "v"},
+					{Kind: diff.Added, Key: "new", Value: true},
 				}},
 			},
 			expectedOutput: "Property 'common.new' was added with value: true",

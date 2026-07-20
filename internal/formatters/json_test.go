@@ -1,7 +1,7 @@
 package formatters_test
 
 import (
-	"code/internal/compare"
+	"code/internal/diff"
 	"code/internal/formatters"
 	"math"
 	"testing"
@@ -15,7 +15,7 @@ func TestJSONFormat(t *testing.T) {
 
 	testCases := []struct {
 		name           string
-		nodes          []compare.Node
+		nodes          []diff.Node
 		expectedOutput string
 	}{
 		{
@@ -27,12 +27,12 @@ func TestJSONFormat(t *testing.T) {
 		},
 		{
 			name: "each change kind maps to a typed node",
-			nodes: []compare.Node{
-				{Kind: compare.Deleted, Key: "gone", Value: 5},
-				{Kind: compare.Updated, Key: "x", OldValue: 1, NewValue: 2},
-				{Kind: compare.Added, Key: "y", Value: true},
-				{Kind: compare.Added, Key: "nothing", Value: nil},
-				{Kind: compare.Unchanged, Key: "z", Value: "keep"},
+			nodes: []diff.Node{
+				{Kind: diff.Deleted, Key: "gone", Value: 5},
+				{Kind: diff.Updated, Key: "x", OldValue: 1, NewValue: 2},
+				{Kind: diff.Added, Key: "y", Value: true},
+				{Kind: diff.Added, Key: "nothing", Value: nil},
+				{Kind: diff.Unchanged, Key: "z", Value: "keep"},
 			},
 			expectedOutput: `{
   "diff": [
@@ -67,11 +67,11 @@ func TestJSONFormat(t *testing.T) {
 		},
 		{
 			name: "nested objects carry children while whole values are inlined",
-			nodes: []compare.Node{
-				{Kind: compare.Nested, Key: "parent", Children: []compare.Node{
-					{Kind: compare.Added, Key: "leaf", Value: 1},
+			nodes: []diff.Node{
+				{Kind: diff.Nested, Key: "parent", Children: []diff.Node{
+					{Kind: diff.Added, Key: "leaf", Value: 1},
 				}},
-				{Kind: compare.Added, Key: "obj", Value: map[string]any{"inner": 2}},
+				{Kind: diff.Added, Key: "obj", Value: map[string]any{"inner": 2}},
 			},
 			expectedOutput: `{
   "diff": [
@@ -114,7 +114,7 @@ func TestJSONFormatReportsMarshallingFailure(t *testing.T) {
 	t.Parallel()
 
 	formatted, err := formatters.Format(
-		[]compare.Node{{Kind: compare.Added, Key: "x", Value: math.NaN()}},
+		[]diff.Node{{Kind: diff.Added, Key: "x", Value: math.NaN()}},
 		formatters.JSON,
 	)
 

@@ -1,4 +1,4 @@
-package loader
+package parser
 
 import (
 	"bytes"
@@ -23,7 +23,7 @@ const (
 	typeYML  = "yml"
 )
 
-func FromFile(path string) (map[string]any, error) {
+func ParseFile(path string) (map[string]any, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("%q: %w: %w", path, ErrRead, errors.Unwrap(err))
