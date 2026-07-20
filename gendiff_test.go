@@ -3,7 +3,8 @@ package code_test
 import (
 	"code"
 	"code/internal/formatters"
-	"code/internal/testutil"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,65 +12,40 @@ import (
 )
 
 const (
-	firstConfig  = `{"a": 1, "b": 2}`
-	secondConfig = `{"a": 1, "b": 3}`
-
-	stylishDiff = "{\n" +
-		"    a: 1\n" +
-		"  - b: 2\n" +
-		"  + b: 3\n" +
-		"}"
-
-	plainDiff = "Property 'b' was updated. From 2 to 3"
-
-	jsonDiff = "{\n" +
-		"  \"diff\": [\n" +
-		"    {\n" +
-		"      \"key\": \"a\",\n" +
-		"      \"type\": \"unchanged\",\n" +
-		"      \"value\": 1\n" +
-		"    },\n" +
-		"    {\n" +
-		"      \"key\": \"b\",\n" +
-		"      \"newValue\": 3,\n" +
-		"      \"oldValue\": 2,\n" +
-		"      \"type\": \"updated\"\n" +
-		"    }\n" +
-		"  ]\n" +
-		"}"
-
-	identicalDiff = "{\n" +
-		"    host: x\n" +
-		"    timeout: 50\n" +
-		"}"
+	firstFile  = "testdata/first.json"
+	secondFile = "testdata/second.json"
 )
 
-func writeConfigs(tb testing.TB) (string, string) {
+func readGolden(tb testing.TB, path string) string {
 	tb.Helper()
 
-	return testutil.WriteTempFileNamed(tb, "first.json", firstConfig),
-		testutil.WriteTempFileNamed(tb, "second.json", secondConfig)
+	content, err := os.ReadFile(path)
+	require.NoError(tb, err)
+
+	return strings.TrimSuffix(string(content), "\n")
 }
 
 func TestGenDiffRendersEveryFormat(t *testing.T) {
 	t.Parallel()
 
-	firstPath, secondPath := writeConfigs(t)
-
-	testCases := map[string]string{
-		formatters.Stylish: stylishDiff,
-		formatters.Plain:   plainDiff,
-		formatters.JSON:    jsonDiff,
+	testCases := []struct {
+		name       string
+		format     string
+		goldenFile string
+	}{
+		{name: "stylish", format: formatters.Stylish, goldenFile: "testdata/expected/basic.stylish"},
+		{name: "plain", format: formatters.Plain, goldenFile: "testdata/expected/basic.plain"},
+		{name: "json", format: formatters.JSON, goldenFile: "testdata/expected/basic.json"},
 	}
 
-	for format, expectedOutput := range testCases {
-		t.Run(format, func(t *testing.T) {
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			result, err := code.GenDiff(firstPath, secondPath, format)
+			result, err := code.GenDiff(firstFile, secondFile, testCase.format)
 
 			require.NoError(t, err)
-			assert.Equal(t, expectedOutput, result)
+			assert.Equal(t, readGolden(t, testCase.goldenFile), result)
 		})
 	}
 }
@@ -77,11 +53,12 @@ func TestGenDiffRendersEveryFormat(t *testing.T) {
 func TestGenDiffTreatsMatchingJSONAndYAMLAsEqual(t *testing.T) {
 	t.Parallel()
 
-	jsonPath := testutil.WriteTempFileNamed(t, "config.json", `{"host": "x", "timeout": 50}`)
-	yamlPath := testutil.WriteTempFileNamed(t, "config.yaml", "host: x\ntimeout: 50\n")
-
-	result, err := code.GenDiff(jsonPath, yamlPath, formatters.Stylish)
+	result, err := code.GenDiff(
+		"testdata/identical.json",
+		"testdata/identical.yaml",
+		formatters.Stylish,
+	)
 
 	require.NoError(t, err)
-	assert.Equal(t, identicalDiff, result)
+	assert.Equal(t, readGolden(t, "testdata/expected/identical.stylish"), result)
 }

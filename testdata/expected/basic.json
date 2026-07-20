@@ -1,0 +1,15 @@
+{
+  "diff": [
+    {
+      "key": "a",
+      "type": "unchanged",
+      "value": 1
+    },
+    {
+      "key": "b",
+      "newValue": 3,
+      "oldValue": 2,
+      "type": "updated"
+    }
+  ]
+}
