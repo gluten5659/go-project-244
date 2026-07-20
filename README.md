@@ -31,13 +31,14 @@ Default format is `stylish`:
 bin/gendiff examples/before.json examples/after.json
 ```
 
-Switch the format with `--format` (or `-f`) — `stylish`, `plain`, or `json`:
+Switch the format with `--format` (or `-f`). The options are `stylish`,
+`plain`, and `json`:
 
 ```bash
 bin/gendiff --format plain examples/before.json examples/after.json
 ```
 
-The `json` format is machine-readable — the whole diff tree is wrapped in a
+The `json` format is machine-readable. The whole diff tree is wrapped in a
 `diff` array, and every node carries its `key`, `type`, and value:
 
 ```bash
@@ -100,6 +101,12 @@ JSON and YAML mix freely, so the two files don't have to share a format:
 bin/gendiff examples/before.yaml examples/after.yaml
 ```
 
+The same number reads equal in both formats. gendiff normalizes numbers to a
+common form when they load, so a JSON `50` matches a YAML `50`. Integers and
+floats are different, so `1` and `1.0` count as a change. Numbers that a config
+cannot represent exactly are rejected as a data error. This covers infinities,
+`NaN`, and values too large for a 64-bit type.
+
 ## Exit codes
 
 `gendiff` follows the BSD `sysexits` conventions, so scripts can tell failures
@@ -109,10 +116,10 @@ apart:
 |------|---------|
 | 0  | Success |
 | 1  | Unexpected error |
-| 64 | Usage error — bad flag, unsupported format, or wrong number of paths |
-| 65 | Data error — malformed or unsupported input file |
+| 64 | Usage error: bad flag, unsupported format, or wrong number of paths |
+| 65 | Data error: malformed or unsupported input file |
 | 66 | Input file not found |
-| 74 | I/O error — reading a file or writing the result |
+| 74 | I/O error: reading a file or writing the result |
 | 77 | Permission denied |
 
 ## Development
