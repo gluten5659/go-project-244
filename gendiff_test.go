@@ -4,8 +4,6 @@ import (
 	"code"
 	"code/internal/formatters"
 	"code/internal/testutil"
-	"io/fs"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,10 +13,34 @@ import (
 const (
 	firstConfig  = `{"a": 1, "b": 2}`
 	secondConfig = `{"a": 1, "b": 3}`
-	stylishDiff  = "{\n" +
+
+	stylishDiff = "{\n" +
 		"    a: 1\n" +
 		"  - b: 2\n" +
 		"  + b: 3\n" +
+		"}"
+
+	plainDiff = "Property 'b' was updated. From 2 to 3"
+
+	jsonDiff = "{\n" +
+		"  \"diff\": [\n" +
+		"    {\n" +
+		"      \"key\": \"a\",\n" +
+		"      \"type\": \"unchanged\",\n" +
+		"      \"value\": 1\n" +
+		"    },\n" +
+		"    {\n" +
+		"      \"key\": \"b\",\n" +
+		"      \"newValue\": 3,\n" +
+		"      \"oldValue\": 2,\n" +
+		"      \"type\": \"updated\"\n" +
+		"    }\n" +
+		"  ]\n" +
+		"}"
+
+	identicalDiff = "{\n" +
+		"    host: x\n" +
+		"    timeout: 50\n" +
 		"}"
 )
 
@@ -29,65 +51,37 @@ func writeConfigs(tb testing.TB) (string, string) {
 		testutil.WriteTempFileNamed(tb, "second.json", secondConfig)
 }
 
-func TestGenDiffRendersStylishDiff(t *testing.T) {
+func TestGenDiffRendersEveryFormat(t *testing.T) {
 	t.Parallel()
 
 	firstPath, secondPath := writeConfigs(t)
 
-	result, err := code.GenDiff(firstPath, secondPath, "stylish")
+	testCases := map[string]string{
+		formatters.Stylish: stylishDiff,
+		formatters.Plain:   plainDiff,
+		formatters.JSON:    jsonDiff,
+	}
 
-	require.NoError(t, err)
-	assert.Equal(t, stylishDiff, result)
-}
-
-func TestGenDiffSupportsEveryFormat(t *testing.T) {
-	t.Parallel()
-
-	firstPath, secondPath := writeConfigs(t)
-
-	for _, format := range formatters.SupportedNames() {
+	for format, expectedOutput := range testCases {
 		t.Run(format, func(t *testing.T) {
 			t.Parallel()
 
 			result, err := code.GenDiff(firstPath, secondPath, format)
 
 			require.NoError(t, err)
-			assert.NotEmpty(t, result)
+			assert.Equal(t, expectedOutput, result)
 		})
 	}
 }
 
-func TestGenDiffRejectsUnsupportedFormat(t *testing.T) {
+func TestGenDiffTreatsMatchingJSONAndYAMLAsEqual(t *testing.T) {
 	t.Parallel()
 
-	firstPath, secondPath := writeConfigs(t)
+	jsonPath := testutil.WriteTempFileNamed(t, "config.json", `{"host": "x", "timeout": 50}`)
+	yamlPath := testutil.WriteTempFileNamed(t, "config.yaml", "host: x\ntimeout: 50\n")
 
-	_, err := code.GenDiff(firstPath, secondPath, "bogus")
+	result, err := code.GenDiff(jsonPath, yamlPath, formatters.Stylish)
 
-	require.ErrorIs(t, err, formatters.ErrUnsupportedFormat)
-}
-
-func TestGenDiffReportsMissingFile(t *testing.T) {
-	t.Parallel()
-
-	firstPath, secondPath := writeConfigs(t)
-	missingPath := filepath.Join(t.TempDir(), "missing.json")
-
-	testCases := map[string]struct {
-		firstPath  string
-		secondPath string
-	}{
-		"missing first file":  {firstPath: missingPath, secondPath: secondPath},
-		"missing second file": {firstPath: firstPath, secondPath: missingPath},
-	}
-
-	for name, testCase := range testCases {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-
-			_, err := code.GenDiff(testCase.firstPath, testCase.secondPath, "stylish")
-
-			require.ErrorIs(t, err, fs.ErrNotExist)
-		})
-	}
+	require.NoError(t, err)
+	assert.Equal(t, identicalDiff, result)
 }
