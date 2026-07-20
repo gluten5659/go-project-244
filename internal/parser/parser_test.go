@@ -151,6 +151,15 @@ func TestParseFileRejectsUnparsableContent(t *testing.T) {
 		{name: "malformed yaml", fileName: yamlConfigName, content: `key: "unterminated`},
 		{name: "unsupported extension", fileName: "config.txt", content: `host: hexlet.io`},
 		{name: "no extension", fileName: "config", content: `{}`},
+		{name: "yaml positive infinity", fileName: yamlConfigName, content: "value: .inf"},
+		{name: "yaml negative infinity", fileName: yamlConfigName, content: "value: -.inf"},
+		{name: "yaml not a number", fileName: yamlConfigName, content: "value: .nan"},
+		{name: "json overflowing float", fileName: jsonConfigName, content: `{"value": 1e400}`},
+		{
+			name:     "json integer beyond uint64",
+			fileName: jsonConfigName,
+			content:  `{"value": 123456789012345678901234567890}`,
+		},
 	}
 
 	for _, testCase := range testCases {

@@ -20,7 +20,7 @@ func GenDiff(firstFilePath, secondFilePath, format string) (string, error) {
 
 	formatter, err := formatters.New(format)
 	if err != nil {
-		return "", fmt.Errorf("format diff: %w", err)
+		return "", fmt.Errorf("select formatter: %w", err)
 	}
 
 	formatted, err := formatter.Format(diff.Compare(firstFile, secondFile))

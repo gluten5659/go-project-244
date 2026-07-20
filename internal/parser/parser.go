@@ -60,18 +60,23 @@ func parse(fileType string, content []byte) (map[string]any, error) {
 		return nil, fmt.Errorf("%w: %w", ErrParse, err)
 	}
 
-	return normalizeMap(parsedContent), nil
+	return normalizeMap(parsedContent)
 }
 
-func normalizeMap(content map[string]any) map[string]any {
+func normalizeMap(content map[string]any) (map[string]any, error) {
 	for key, value := range content {
-		content[key] = normalizeValue(value)
+		normalized, err := normalizeValue(value)
+		if err != nil {
+			return nil, err
+		}
+
+		content[key] = normalized
 	}
 
-	return content
+	return content, nil
 }
 
-func normalizeValue(value any) any {
+func normalizeValue(value any) (any, error) {
 	switch typed := value.(type) {
 	case map[string]any:
 		return normalizeMap(typed)
@@ -84,19 +89,29 @@ func normalizeValue(value any) any {
 	}
 }
 
-func normalizeStringKeyedMap(content map[any]any) map[string]any {
+func normalizeStringKeyedMap(content map[any]any) (map[string]any, error) {
 	converted := make(map[string]any, len(content))
 	for key, value := range content {
-		converted[fmt.Sprint(key)] = normalizeValue(value)
+		normalized, err := normalizeValue(value)
+		if err != nil {
+			return nil, err
+		}
+
+		converted[fmt.Sprint(key)] = normalized
 	}
 
-	return converted
+	return converted, nil
 }
 
-func normalizeSlice(content []any) []any {
+func normalizeSlice(content []any) ([]any, error) {
 	for index, value := range content {
-		content[index] = normalizeValue(value)
+		normalized, err := normalizeValue(value)
+		if err != nil {
+			return nil, err
+		}
+
+		content[index] = normalized
 	}
 
-	return content
+	return content, nil
 }

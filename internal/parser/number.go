@@ -2,25 +2,26 @@ package parser
 
 import (
 	"encoding/json"
+	"fmt"
+	"math"
 	"strconv"
 	"strings"
 )
 
 type Number struct {
-	isInt   bool
 	display string
 }
 
 func IntNumber(value int64) Number {
-	return Number{isInt: true, display: strconv.FormatInt(value, 10)}
+	return Number{display: strconv.FormatInt(value, 10)}
 }
 
 func FloatNumber(value float64) Number {
-	return Number{isInt: false, display: formatFloat(value)}
+	return Number{display: formatFloat(value)}
 }
 
 func UintNumber(value uint64) Number {
-	return Number{isInt: true, display: strconv.FormatUint(value, 10)}
+	return Number{display: strconv.FormatUint(value, 10)}
 }
 
 func (number Number) String() string {
@@ -31,46 +32,54 @@ func (number Number) MarshalJSON() ([]byte, error) {
 	return []byte(number.display), nil
 }
 
-func normalizeScalar(value any) any {
+func normalizeScalar(value any) (any, error) {
 	switch typed := value.(type) {
 	case json.Number:
 		return numberFromToken(typed)
 	case int:
-		return IntNumber(int64(typed))
+		return IntNumber(int64(typed)), nil
 	case int64:
-		return IntNumber(typed)
+		return IntNumber(typed), nil
 	case uint64:
-		return UintNumber(typed)
+		return UintNumber(typed), nil
 	case float64:
-		return FloatNumber(typed)
+		return finiteFloat(typed)
 	default:
-		return value
+		return value, nil
 	}
 }
 
-func numberFromToken(token json.Number) Number {
+func finiteFloat(value float64) (Number, error) {
+	if math.IsInf(value, 0) || math.IsNaN(value) {
+		return Number{}, fmt.Errorf("%w: number %v is not finite", ErrParse, value)
+	}
+
+	return FloatNumber(value), nil
+}
+
+func numberFromToken(token json.Number) (Number, error) {
 	text := string(token)
 
 	if strings.ContainsAny(text, ".eE") {
 		value, err := strconv.ParseFloat(text, 64)
 		if err != nil {
-			return Number{isInt: false, display: text}
+			return Number{}, fmt.Errorf("%w: number %q: %w", ErrParse, text, err)
 		}
 
-		return FloatNumber(value)
+		return finiteFloat(value)
 	}
 
 	signedValue, err := strconv.ParseInt(text, 10, 64)
 	if err == nil {
-		return IntNumber(signedValue)
+		return IntNumber(signedValue), nil
 	}
 
 	unsignedValue, err := strconv.ParseUint(text, 10, 64)
 	if err == nil {
-		return UintNumber(unsignedValue)
+		return UintNumber(unsignedValue), nil
 	}
 
-	return Number{isInt: true, display: text}
+	return Number{}, fmt.Errorf("%w: integer %q is out of range", ErrParse, text)
 }
 
 func formatFloat(value float64) string {
