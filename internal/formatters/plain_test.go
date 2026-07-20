@@ -77,7 +77,10 @@ func TestPlainFormat(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			formatted, err := formatters.Format(testCase.nodes, formatters.Plain)
+			formatter, err := formatters.New(formatters.Plain)
+			require.NoError(t, err)
+
+			formatted, err := formatter.Format(testCase.nodes)
 
 			require.NoError(t, err)
 			assert.Equal(t, testCase.expectedOutput, formatted)

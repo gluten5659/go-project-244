@@ -4,7 +4,6 @@ import (
 	"code/internal/diff"
 	"encoding/json"
 	"fmt"
-	"strings"
 )
 
 const (
@@ -23,17 +22,17 @@ const (
 	nodeNested    = "nested"
 )
 
-func writeJSON(builder *strings.Builder, nodes []diff.Node) error {
+type jsonFormatter struct{}
+
+func (jsonFormatter) Format(nodes []diff.Node) (string, error) {
 	document := map[string]any{fieldDiff: jsonNodes(nodes)}
 
 	encoded, err := json.MarshalIndent(document, "", "  ")
 	if err != nil {
-		return fmt.Errorf("marshal json diff: %w", err)
+		return "", fmt.Errorf("marshal json diff: %w", err)
 	}
 
-	builder.Write(encoded)
-
-	return nil
+	return string(encoded), nil
 }
 
 func jsonNodes(nodes []diff.Node) []map[string]any {

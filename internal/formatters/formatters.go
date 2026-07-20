@@ -4,6 +4,8 @@ import (
 	"code/internal/diff"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 )
 
@@ -15,54 +17,34 @@ const (
 
 var ErrUnsupportedFormat = errors.New("unsupported output format")
 
-type writer func(*strings.Builder, []diff.Node) error
-
-type namedFormatter struct {
-	name  string
-	write writer
+type Formatter interface {
+	Format(nodes []diff.Node) (string, error)
 }
 
-func supportedFormatters() []namedFormatter {
-	return []namedFormatter{
-		{name: JSON, write: writeJSON},
-		{name: Plain, write: writePlainRoot},
-		{name: Stylish, write: writeStylishRoot},
+func registry() map[string]func() Formatter {
+	return map[string]func() Formatter{
+		Stylish: func() Formatter { return stylishFormatter{} },
+		Plain:   func() Formatter { return plainFormatter{} },
+		JSON:    func() Formatter { return jsonFormatter{} },
 	}
 }
 
-func Format(nodes []diff.Node, name string) (string, error) {
-	write := writerFor(name)
-	if write == nil {
-		return "", fmt.Errorf("%w: %q", ErrUnsupportedFormat, name)
+func New(name string) (Formatter, error) {
+	build, ok := registry()[name]
+	if !ok {
+		return nil, fmt.Errorf("%w: %q", ErrUnsupportedFormat, name)
 	}
 
-	builder := strings.Builder{}
-
-	err := write(&builder, nodes)
-	if err != nil {
-		return "", err
-	}
-
-	return strings.TrimRight(builder.String(), "\n"), nil
-}
-
-func writerFor(name string) writer {
-	for _, formatter := range supportedFormatters() {
-		if formatter.name == name {
-			return formatter.write
-		}
-	}
-
-	return nil
+	return build(), nil
 }
 
 func SupportedNames() []string {
-	available := supportedFormatters()
-
-	names := make([]string, 0, len(available))
-	for _, formatter := range available {
-		names = append(names, formatter.name)
-	}
+	names := slices.Collect(maps.Keys(registry()))
+	slices.Sort(names)
 
 	return names
+}
+
+func finalize(builder *strings.Builder) string {
+	return strings.TrimRight(builder.String(), "\n")
 }

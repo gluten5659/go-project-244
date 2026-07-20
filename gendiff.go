@@ -18,7 +18,12 @@ func GenDiff(firstFilePath, secondFilePath, format string) (string, error) {
 		return "", fmt.Errorf("load second file: %w", err)
 	}
 
-	formatted, err := formatters.Format(diff.Compare(firstFile, secondFile), format)
+	formatter, err := formatters.New(format)
+	if err != nil {
+		return "", fmt.Errorf("format diff: %w", err)
+	}
+
+	formatted, err := formatter.Format(diff.Compare(firstFile, secondFile))
 	if err != nil {
 		return "", fmt.Errorf("format diff: %w", err)
 	}

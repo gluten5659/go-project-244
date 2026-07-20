@@ -87,7 +87,10 @@ func TestStylishFormat(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			formatted, err := formatters.Format(testCase.nodes, formatters.Stylish)
+			formatter, err := formatters.New(formatters.Stylish)
+			require.NoError(t, err)
+
+			formatted, err := formatter.Format(testCase.nodes)
 
 			require.NoError(t, err)
 			assert.Equal(t, testCase.expectedOutput, formatted)

@@ -6,10 +6,13 @@ import (
 	"strings"
 )
 
-func writePlainRoot(builder *strings.Builder, nodes []diff.Node) error {
-	writePlain(builder, nodes, "")
+type plainFormatter struct{}
 
-	return nil
+func (plainFormatter) Format(nodes []diff.Node) (string, error) {
+	builder := strings.Builder{}
+	writePlain(&builder, nodes, "")
+
+	return finalize(&builder), nil
 }
 
 func writePlain(builder *strings.Builder, nodes []diff.Node, parentPath string) {

@@ -102,7 +102,10 @@ func TestJSONFormat(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			formatted, err := formatters.Format(testCase.nodes, formatters.JSON)
+			formatter, err := formatters.New(formatters.JSON)
+			require.NoError(t, err)
+
+			formatted, err := formatter.Format(testCase.nodes)
 
 			require.NoError(t, err)
 			assert.Equal(t, testCase.expectedOutput, formatted)
@@ -113,9 +116,11 @@ func TestJSONFormat(t *testing.T) {
 func TestJSONFormatReportsMarshallingFailure(t *testing.T) {
 	t.Parallel()
 
-	formatted, err := formatters.Format(
+	formatter, err := formatters.New(formatters.JSON)
+	require.NoError(t, err)
+
+	formatted, err := formatter.Format(
 		[]diff.Node{{Kind: diff.Added, Key: "x", Value: math.NaN()}},
-		formatters.JSON,
 	)
 
 	require.Error(t, err)

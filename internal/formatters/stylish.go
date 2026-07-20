@@ -10,10 +10,13 @@ import (
 
 const indentUnit = "    "
 
-func writeStylishRoot(builder *strings.Builder, nodes []diff.Node) error {
-	writeStylish(builder, nodes, 0)
+type stylishFormatter struct{}
 
-	return nil
+func (stylishFormatter) Format(nodes []diff.Node) (string, error) {
+	builder := strings.Builder{}
+	writeStylish(&builder, nodes, 0)
+
+	return finalize(&builder), nil
 }
 
 func writeStylish(builder *strings.Builder, nodes []diff.Node, level int) {
