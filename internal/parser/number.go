@@ -43,13 +43,13 @@ func normalizeScalar(value any) (any, error) {
 	case uint64:
 		return UintNumber(typed), nil
 	case float64:
-		return finiteFloat(typed)
+		return requireFinite(typed)
 	default:
 		return value, nil
 	}
 }
 
-func finiteFloat(value float64) (Number, error) {
+func requireFinite(value float64) (Number, error) {
 	if math.IsInf(value, 0) || math.IsNaN(value) {
 		return Number{}, fmt.Errorf("%w: number %v is not finite", ErrParse, value)
 	}
@@ -66,7 +66,7 @@ func numberFromToken(token json.Number) (Number, error) {
 			return Number{}, fmt.Errorf("%w: number %q: %w", ErrParse, text, err)
 		}
 
-		return finiteFloat(value)
+		return requireFinite(value)
 	}
 
 	signedValue, err := strconv.ParseInt(text, 10, 64)
