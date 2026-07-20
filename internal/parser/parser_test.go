@@ -71,6 +71,18 @@ func TestParseFileParsesContent(t *testing.T) {
 			content:       "settings:\n  1: one\n  2: two",
 			expectedValue: map[string]any{settingsKey: map[string]any{"1": "one", "2": "two"}},
 		},
+		{
+			name:          "array values normalize element by element",
+			fileName:      jsonConfigName,
+			content:       `{"ports": [80, 443]}`,
+			expectedValue: map[string]any{"ports": []any{parser.IntNumber(80), parser.IntNumber(443)}},
+		},
+		{
+			name:          "zero float keeps its decimal marker",
+			fileName:      jsonConfigName,
+			content:       `{"ratio": 0.0}`,
+			expectedValue: map[string]any{"ratio": parser.FloatNumber(0)},
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -134,6 +146,16 @@ func TestParseFileNormalizesNumbersToACommonForm(t *testing.T) {
 
 		assert.Equal(t, map[string]any{"id": parser.IntNumber(9007199254740993)}, values)
 	})
+
+	t.Run("an integer beyond int64 but within uint64 stays exact", func(t *testing.T) {
+		t.Parallel()
+
+		fromJSON := load(t, jsonConfigName, `{"big": 10000000000000000000}`)
+		fromYAML := load(t, yamlConfigName, "big: 10000000000000000000\n")
+
+		assert.Equal(t, map[string]any{"big": parser.UintNumber(10000000000000000000)}, fromJSON)
+		assert.Equal(t, fromJSON, fromYAML)
+	})
 }
 
 func TestParseFileRejectsUnparsableContent(t *testing.T) {
@@ -159,6 +181,12 @@ func TestParseFileRejectsUnparsableContent(t *testing.T) {
 			name:     "json integer beyond uint64",
 			fileName: jsonConfigName,
 			content:  `{"value": 123456789012345678901234567890}`,
+		},
+		{name: "non-finite inside an array", fileName: jsonConfigName, content: `{"list": [1e400]}`},
+		{
+			name:     "non-finite under a non-string key",
+			fileName: yamlConfigName,
+			content:  "settings:\n  1: .inf",
 		},
 	}
 
