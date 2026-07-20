@@ -1,6 +1,7 @@
 package loader
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -48,7 +49,9 @@ func parse(fileType string, content []byte) (map[string]any, error) {
 	case typeYAML, typeYML:
 		err = yaml.Unmarshal(content, &parsedContent)
 	case typeJSON:
-		err = json.Unmarshal(content, &parsedContent)
+		decoder := json.NewDecoder(bytes.NewReader(content))
+		decoder.UseNumber()
+		err = decoder.Decode(&parsedContent)
 	default:
 		return nil, fmt.Errorf("%w: unsupported file type %q", ErrParse, fileType)
 	}
@@ -73,19 +76,27 @@ func normalizeValue(value any) any {
 	case map[string]any:
 		return normalizeMap(typed)
 	case map[any]any:
-		converted := make(map[string]any, len(typed))
-		for key, nested := range typed {
-			converted[fmt.Sprint(key)] = normalizeValue(nested)
-		}
-
-		return converted
+		return normalizeStringKeyedMap(typed)
 	case []any:
-		for index, nested := range typed {
-			typed[index] = normalizeValue(nested)
-		}
-
-		return typed
+		return normalizeSlice(typed)
 	default:
-		return value
+		return normalizeScalar(value)
 	}
+}
+
+func normalizeStringKeyedMap(content map[any]any) map[string]any {
+	converted := make(map[string]any, len(content))
+	for key, value := range content {
+		converted[fmt.Sprint(key)] = normalizeValue(value)
+	}
+
+	return converted
+}
+
+func normalizeSlice(content []any) []any {
+	for index, value := range content {
+		content[index] = normalizeValue(value)
+	}
+
+	return content
 }
