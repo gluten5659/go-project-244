@@ -28,11 +28,11 @@ func TestJSONFormat(t *testing.T) {
 		{
 			name: "each change kind maps to a typed node",
 			nodes: []diff.Node{
-				{Kind: diff.Deleted, Key: "gone", Value: 5},
+				{Kind: diff.Deleted, Key: "gone", OldValue: 5},
 				{Kind: diff.Updated, Key: "x", OldValue: 1, NewValue: 2},
-				{Kind: diff.Added, Key: "y", Value: true},
-				{Kind: diff.Added, Key: "nothing", Value: nil},
-				{Kind: diff.Unchanged, Key: "z", Value: "keep"},
+				{Kind: diff.Added, Key: "y", NewValue: true},
+				{Kind: diff.Added, Key: "nothing", NewValue: nil},
+				{Kind: diff.Unchanged, Key: "z", OldValue: "keep", NewValue: "keep"},
 			},
 			expectedOutput: `{
   "diff": [
@@ -69,9 +69,9 @@ func TestJSONFormat(t *testing.T) {
 			name: "nested objects carry children while whole values are inlined",
 			nodes: []diff.Node{
 				{Kind: diff.Nested, Key: "parent", Children: []diff.Node{
-					{Kind: diff.Added, Key: "leaf", Value: 1},
+					{Kind: diff.Added, Key: "leaf", NewValue: 1},
 				}},
-				{Kind: diff.Added, Key: "obj", Value: map[string]any{"inner": 2}},
+				{Kind: diff.Added, Key: "obj", NewValue: map[string]any{"inner": 2}},
 			},
 			expectedOutput: `{
   "diff": [
@@ -120,7 +120,7 @@ func TestJSONFormatReportsMarshallingFailure(t *testing.T) {
 	require.NoError(t, err)
 
 	formatted, err := formatter.Format(
-		[]diff.Node{{Kind: diff.Added, Key: "x", Value: math.NaN()}},
+		[]diff.Node{{Kind: diff.Added, Key: "x", NewValue: math.NaN()}},
 	)
 
 	require.Error(t, err)

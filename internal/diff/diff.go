@@ -20,7 +20,6 @@ const (
 type Node struct {
 	Key      string
 	Kind     Kind
-	Value    any
 	OldValue any
 	NewValue any
 	Children []Node
@@ -43,9 +42,9 @@ func compareKey(key string, firstFile, secondFile map[string]any) Node {
 
 	switch {
 	case !isKeyInFirstFile:
-		return Node{Key: key, Kind: Added, Value: secondValue}
+		return Node{Key: key, Kind: Added, NewValue: secondValue}
 	case !isKeyInSecondFile:
-		return Node{Key: key, Kind: Deleted, Value: firstValue}
+		return Node{Key: key, Kind: Deleted, OldValue: firstValue}
 	}
 
 	firstObject, isFirstObject := firstValue.(map[string]any)
@@ -56,7 +55,7 @@ func compareKey(key string, firstFile, secondFile map[string]any) Node {
 	}
 
 	if reflect.DeepEqual(firstValue, secondValue) {
-		return Node{Key: key, Kind: Unchanged, Value: firstValue}
+		return Node{Key: key, Kind: Unchanged, OldValue: firstValue, NewValue: secondValue}
 	}
 
 	return Node{Key: key, Kind: Updated, OldValue: firstValue, NewValue: secondValue}

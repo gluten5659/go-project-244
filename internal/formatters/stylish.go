@@ -41,13 +41,13 @@ func writeStylishNode(builder *strings.Builder, node diff.Node, level int) {
 		writeStylishValue(builder, node.NewValue, level)
 	case diff.Added:
 		writeStylishKey(builder, level, "+", node.Key)
-		writeStylishValue(builder, node.Value, level)
+		writeStylishValue(builder, node.NewValue, level)
 	case diff.Deleted:
 		writeStylishKey(builder, level, "-", node.Key)
-		writeStylishValue(builder, node.Value, level)
+		writeStylishValue(builder, node.OldValue, level)
 	case diff.Unchanged:
 		writeStylishKey(builder, level, " ", node.Key)
-		writeStylishValue(builder, node.Value, level)
+		writeStylishValue(builder, node.OldValue, level)
 	}
 }
 

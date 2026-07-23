@@ -32,19 +32,19 @@ func TestCompare(t *testing.T) {
 			expectedNodes: []diff.Node{},
 		},
 		{
-			name:       "key only in first file is deleted with its value",
+			name:       "key only in first file is deleted with its old value",
 			firstFile:  map[string]any{"follow": false},
 			secondFile: map[string]any{},
 			expectedNodes: []diff.Node{
-				{Kind: diff.Deleted, Key: "follow", Value: false},
+				{Kind: diff.Deleted, Key: "follow", OldValue: false},
 			},
 		},
 		{
-			name:       "key only in second file is added with its value",
+			name:       "key only in second file is added with its new value",
 			firstFile:  map[string]any{},
 			secondFile: map[string]any{"verbose": true},
 			expectedNodes: []diff.Node{
-				{Kind: diff.Added, Key: "verbose", Value: true},
+				{Kind: diff.Added, Key: "verbose", NewValue: true},
 			},
 		},
 		{
@@ -56,11 +56,11 @@ func TestCompare(t *testing.T) {
 			},
 		},
 		{
-			name:       "equal value stays unchanged",
+			name:       "equal value stays unchanged and carries both sides",
 			firstFile:  map[string]any{keyHost: hostValue},
 			secondFile: map[string]any{keyHost: hostValue},
 			expectedNodes: []diff.Node{
-				{Kind: diff.Unchanged, Key: keyHost, Value: hostValue},
+				{Kind: diff.Unchanged, Key: keyHost, OldValue: hostValue, NewValue: hostValue},
 			},
 		},
 		{
@@ -68,7 +68,12 @@ func TestCompare(t *testing.T) {
 			firstFile:  map[string]any{keyList: []any{1, 2, 3}},
 			secondFile: map[string]any{keyList: []any{1, 2, 3}},
 			expectedNodes: []diff.Node{
-				{Kind: diff.Unchanged, Key: keyList, Value: []any{1, 2, 3}},
+				{
+					Kind:     diff.Unchanged,
+					Key:      keyList,
+					OldValue: []any{1, 2, 3},
+					NewValue: []any{1, 2, 3},
+				},
 			},
 		},
 		{
@@ -94,7 +99,7 @@ func TestCompare(t *testing.T) {
 			firstFile:  map[string]any{keyNested: map[string]any{"x": 1}},
 			secondFile: map[string]any{},
 			expectedNodes: []diff.Node{
-				{Kind: diff.Deleted, Key: keyNested, Value: map[string]any{"x": 1}},
+				{Kind: diff.Deleted, Key: keyNested, OldValue: map[string]any{"x": 1}},
 			},
 		},
 		{
@@ -130,7 +135,7 @@ func TestCompare(t *testing.T) {
 				keyNested: map[string]any{"alpha": 1, "beta": map[string]any{"gamma": 2}},
 			},
 			expectedNodes: []diff.Node{
-				{Kind: diff.Added, Key: keyNested, Value: map[string]any{
+				{Kind: diff.Added, Key: keyNested, NewValue: map[string]any{
 					"alpha": 1, "beta": map[string]any{"gamma": 2},
 				}},
 			},
@@ -140,9 +145,9 @@ func TestCompare(t *testing.T) {
 			firstFile:  map[string]any{"b": 1, "a": 1},
 			secondFile: map[string]any{"c": 1, "a": 1},
 			expectedNodes: []diff.Node{
-				{Kind: diff.Unchanged, Key: "a", Value: 1},
-				{Kind: diff.Deleted, Key: "b", Value: 1},
-				{Kind: diff.Added, Key: "c", Value: 1},
+				{Kind: diff.Unchanged, Key: "a", OldValue: 1, NewValue: 1},
+				{Kind: diff.Deleted, Key: "b", OldValue: 1},
+				{Kind: diff.Added, Key: "c", NewValue: 1},
 			},
 		},
 	}

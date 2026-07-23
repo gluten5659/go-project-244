@@ -25,10 +25,10 @@ func TestPlainFormat(t *testing.T) {
 		{
 			name: "added values follow the quoting rules",
 			nodes: []diff.Node{
-				{Kind: diff.Added, Key: "flag", Value: false},
-				{Kind: diff.Added, Key: "name", Value: "bob"},
-				{Kind: diff.Added, Key: "opt", Value: nil},
-				{Kind: diff.Added, Key: "empty", Value: ""},
+				{Kind: diff.Added, Key: "flag", NewValue: false},
+				{Kind: diff.Added, Key: "name", NewValue: "bob"},
+				{Kind: diff.Added, Key: "opt", NewValue: nil},
+				{Kind: diff.Added, Key: "empty", NewValue: ""},
 			},
 			expectedOutput: "Property 'flag' was added with value: false\n" +
 				"Property 'name' was added with value: 'bob'\n" +
@@ -37,7 +37,7 @@ func TestPlainFormat(t *testing.T) {
 		},
 		{
 			name:           "removed property is reported",
-			nodes:          []diff.Node{{Kind: diff.Deleted, Key: "old", Value: 1}},
+			nodes:          []diff.Node{{Kind: diff.Deleted, Key: "old", OldValue: 1}},
 			expectedOutput: "Property 'old' was removed",
 		},
 		{
@@ -57,7 +57,7 @@ func TestPlainFormat(t *testing.T) {
 		{
 			name: "added object renders as a complex placeholder",
 			nodes: []diff.Node{
-				{Kind: diff.Added, Key: "obj", Value: map[string]any{"a": 1}},
+				{Kind: diff.Added, Key: "obj", NewValue: map[string]any{"a": 1}},
 			},
 			expectedOutput: "Property 'obj' was added with value: [complex value]",
 		},
@@ -65,8 +65,8 @@ func TestPlainFormat(t *testing.T) {
 			name: "nested paths are dotted and unchanged leaves are skipped",
 			nodes: []diff.Node{
 				{Kind: diff.Nested, Key: "common", Children: []diff.Node{
-					{Kind: diff.Unchanged, Key: "keep", Value: "v"},
-					{Kind: diff.Added, Key: "new", Value: true},
+					{Kind: diff.Unchanged, Key: "same", OldValue: "v", NewValue: "v"},
+					{Kind: diff.Added, Key: "new", NewValue: true},
 				}},
 			},
 			expectedOutput: "Property 'common.new' was added with value: true",

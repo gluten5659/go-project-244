@@ -25,9 +25,9 @@ func TestStylishFormat(t *testing.T) {
 		{
 			name: "each change kind gets its marker at the root level",
 			nodes: []diff.Node{
-				{Kind: diff.Deleted, Key: "follow", Value: false},
-				{Kind: diff.Unchanged, Key: "host", Value: "hexlet.io"},
-				{Kind: diff.Added, Key: "verbose", Value: true},
+				{Kind: diff.Deleted, Key: "follow", OldValue: false},
+				{Kind: diff.Unchanged, Key: "host", OldValue: "hexlet.io", NewValue: "hexlet.io"},
+				{Kind: diff.Added, Key: "verbose", NewValue: true},
 			},
 			expectedOutput: "{\n" +
 				"  - follow: false\n" +
@@ -37,7 +37,7 @@ func TestStylishFormat(t *testing.T) {
 		},
 		{
 			name:           "nil value renders as null",
-			nodes:          []diff.Node{{Kind: diff.Added, Key: "setting3", Value: nil}},
+			nodes:          []diff.Node{{Kind: diff.Added, Key: "setting3", NewValue: nil}},
 			expectedOutput: "{\n  + setting3: null\n}",
 		},
 		{
@@ -53,7 +53,7 @@ func TestStylishFormat(t *testing.T) {
 		{
 			name: "an added object renders as a sorted tree of its keys",
 			nodes: []diff.Node{
-				{Kind: diff.Added, Key: "settings", Value: map[string]any{"b": 2, "a": 1}},
+				{Kind: diff.Added, Key: "settings", NewValue: map[string]any{"b": 2, "a": 1}},
 			},
 			expectedOutput: "{\n" +
 				"  + settings: {\n" +
@@ -66,9 +66,9 @@ func TestStylishFormat(t *testing.T) {
 			name: "nested children indent by depth",
 			nodes: []diff.Node{
 				{Kind: diff.Nested, Key: "common", Children: []diff.Node{
-					{Kind: diff.Added, Key: "follow", Value: false},
+					{Kind: diff.Added, Key: "follow", NewValue: false},
 					{Kind: diff.Nested, Key: "sub", Children: []diff.Node{
-						{Kind: diff.Deleted, Key: "x", Value: 1},
+						{Kind: diff.Deleted, Key: "x", OldValue: 1},
 					}},
 				}},
 			},

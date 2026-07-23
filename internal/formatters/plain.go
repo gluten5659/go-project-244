@@ -29,7 +29,7 @@ func writePlain(builder *strings.Builder, nodes []diff.Node, parentPath string) 
 			fmt.Fprintf(builder, "Property '%s' was removed\n", path)
 		case diff.Added:
 			fmt.Fprintf(builder, "Property '%s' was added with value: %s\n",
-				path, plainValue(node.Value))
+				path, plainValue(node.NewValue))
 		case diff.Unchanged:
 		}
 	}

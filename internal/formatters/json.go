@@ -69,11 +69,11 @@ func jsonNode(node diff.Node) any {
 			Type:     nodeUpdated,
 		}
 	case diff.Added:
-		return jsonValueNode{Key: node.Key, Type: nodeAdded, Value: node.Value}
+		return jsonValueNode{Key: node.Key, Type: nodeAdded, Value: node.NewValue}
 	case diff.Deleted:
-		return jsonValueNode{Key: node.Key, Type: nodeRemoved, Value: node.Value}
+		return jsonValueNode{Key: node.Key, Type: nodeRemoved, Value: node.OldValue}
 	case diff.Unchanged:
-		return jsonValueNode{Key: node.Key, Type: nodeUnchanged, Value: node.Value}
+		return jsonValueNode{Key: node.Key, Type: nodeUnchanged, Value: node.OldValue}
 	}
 
 	return nil
