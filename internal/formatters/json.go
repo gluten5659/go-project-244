@@ -3,6 +3,7 @@ package formatters
 import (
 	"code/internal/diff"
 	"encoding/json"
+	"errors"
 	"fmt"
 )
 
@@ -14,27 +15,19 @@ const (
 	nodeNested    = "nested"
 )
 
+var errUnknownChangeKind = errors.New("unknown change kind")
+
 type jsonDiff struct {
-	Diff []any `json:"diff"`
+	Diff []jsonNode `json:"diff"`
 }
 
-type jsonValueNode struct {
-	Key   string `json:"key"`
-	Type  string `json:"type"`
-	Value any    `json:"value"`
-}
-
-type jsonUpdatedNode struct {
-	Key      string `json:"key"`
-	NewValue any    `json:"newValue"`
-	OldValue any    `json:"oldValue"`
-	Type     string `json:"type"`
-}
-
-type jsonNestedNode struct {
-	Children []any  `json:"children"`
-	Key      string `json:"key"`
-	Type     string `json:"type"`
+type jsonNode struct {
+	Children *[]jsonNode `json:"children,omitempty"`
+	Key      string      `json:"key"`
+	NewValue *any        `json:"newValue,omitempty"`
+	OldValue *any        `json:"oldValue,omitempty"`
+	Type     string      `json:"type"`
+	Value    *any        `json:"value,omitempty"`
 }
 
 type jsonFormatter struct{}
@@ -44,7 +37,12 @@ func NewJSON() Formatter {
 }
 
 func (jsonFormatter) Format(nodes []diff.Node) (string, error) {
-	encoded, err := json.MarshalIndent(jsonDiff{Diff: jsonNodes(nodes)}, "", "  ")
+	built, err := buildJSONNodes(nodes)
+	if err != nil {
+		return "", err
+	}
+
+	encoded, err := json.MarshalIndent(jsonDiff{Diff: built}, "", "  ")
 	if err != nil {
 		return "", fmt.Errorf("marshal json diff: %w", err)
 	}
@@ -52,33 +50,44 @@ func (jsonFormatter) Format(nodes []diff.Node) (string, error) {
 	return string(encoded), nil
 }
 
-func jsonNodes(nodes []diff.Node) []any {
-	encoded := make([]any, 0, len(nodes))
+func buildJSONNodes(nodes []diff.Node) ([]jsonNode, error) {
+	built := make([]jsonNode, 0, len(nodes))
+
 	for _, node := range nodes {
-		encoded = append(encoded, jsonNode(node))
+		encoded, err := buildJSONNode(node)
+		if err != nil {
+			return nil, err
+		}
+
+		built = append(built, encoded)
 	}
 
-	return encoded
+	return built, nil
 }
 
-func jsonNode(node diff.Node) any {
+func buildJSONNode(node diff.Node) (jsonNode, error) {
 	switch node.Kind {
 	case diff.Nested:
-		return jsonNestedNode{Children: jsonNodes(node.Children), Key: node.Key, Type: nodeNested}
-	case diff.Updated:
-		return jsonUpdatedNode{
-			Key:      node.Key,
-			NewValue: node.NewValue,
-			OldValue: node.OldValue,
-			Type:     nodeUpdated,
+		children, err := buildJSONNodes(node.Children)
+		if err != nil {
+			return jsonNode{}, err
 		}
-	case diff.Added:
-		return jsonValueNode{Key: node.Key, Type: nodeAdded, Value: node.NewValue}
-	case diff.Deleted:
-		return jsonValueNode{Key: node.Key, Type: nodeRemoved, Value: node.OldValue}
-	case diff.Unchanged:
-		return jsonValueNode{Key: node.Key, Type: nodeUnchanged, Value: node.OldValue}
-	}
 
-	return nil
+		return jsonNode{Children: &children, Key: node.Key, Type: nodeNested}, nil
+	case diff.Updated:
+		return jsonNode{
+			Key:      node.Key,
+			NewValue: new(node.NewValue),
+			OldValue: new(node.OldValue),
+			Type:     nodeUpdated,
+		}, nil
+	case diff.Added:
+		return jsonNode{Key: node.Key, Type: nodeAdded, Value: new(node.NewValue)}, nil
+	case diff.Deleted:
+		return jsonNode{Key: node.Key, Type: nodeRemoved, Value: new(node.OldValue)}, nil
+	case diff.Unchanged:
+		return jsonNode{Key: node.Key, Type: nodeUnchanged, Value: new(node.OldValue)}, nil
+	default:
+		return jsonNode{}, fmt.Errorf("%w: %d", errUnknownChangeKind, node.Kind)
+	}
 }

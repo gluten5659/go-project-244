@@ -66,6 +66,35 @@ func TestJSONFormat(t *testing.T) {
 }`,
 		},
 		{
+			name:  "a nested node without children keeps an empty children list",
+			nodes: []diff.Node{{Kind: diff.Nested, Key: "settings"}},
+			expectedOutput: `{
+  "diff": [
+    {
+      "children": [],
+      "key": "settings",
+      "type": "nested"
+    }
+  ]
+}`,
+		},
+		{
+			name: "an update to null keeps both sides visible",
+			nodes: []diff.Node{
+				{Kind: diff.Updated, Key: "setting", OldValue: true, NewValue: nil},
+			},
+			expectedOutput: `{
+  "diff": [
+    {
+      "key": "setting",
+      "newValue": null,
+      "oldValue": true,
+      "type": "updated"
+    }
+  ]
+}`,
+		},
+		{
 			name: "nested objects carry children while whole values are inlined",
 			nodes: []diff.Node{
 				{Kind: diff.Nested, Key: "parent", Children: []diff.Node{
@@ -122,6 +151,20 @@ func TestJSONFormatReportsMarshallingFailure(t *testing.T) {
 	formatted, err := formatter.Format(
 		[]diff.Node{{Kind: diff.Added, Key: "x", NewValue: math.NaN()}},
 	)
+
+	require.Error(t, err)
+	assert.Empty(t, formatted)
+}
+
+func TestJSONFormatRejectsUnknownChangeKind(t *testing.T) {
+	t.Parallel()
+
+	const unknownKind = diff.Nested + 1
+
+	formatter, err := formatters.New(formatters.JSON)
+	require.NoError(t, err)
+
+	formatted, err := formatter.Format([]diff.Node{{Kind: unknownKind, Key: "x"}})
 
 	require.Error(t, err)
 	assert.Empty(t, formatted)
