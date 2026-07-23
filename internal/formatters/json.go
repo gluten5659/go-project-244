@@ -30,6 +30,18 @@ type jsonNode struct {
 	Value    *any        `json:"value,omitempty"`
 }
 
+func newNestedNode(key string, children []jsonNode) jsonNode {
+	return jsonNode{Key: key, Type: nodeNested, Children: &children}
+}
+
+func newUpdatedNode(key string, oldValue, newValue any) jsonNode {
+	return jsonNode{Key: key, Type: nodeUpdated, OldValue: &oldValue, NewValue: &newValue}
+}
+
+func newValueNode(nodeType, key string, value any) jsonNode {
+	return jsonNode{Key: key, Type: nodeType, Value: &value}
+}
+
 type jsonFormatter struct{}
 
 func NewJSON() Formatter {
@@ -73,20 +85,15 @@ func buildJSONNode(node diff.Node) (jsonNode, error) {
 			return jsonNode{}, err
 		}
 
-		return jsonNode{Children: &children, Key: node.Key, Type: nodeNested}, nil
+		return newNestedNode(node.Key, children), nil
 	case diff.Updated:
-		return jsonNode{
-			Key:      node.Key,
-			NewValue: new(node.NewValue),
-			OldValue: new(node.OldValue),
-			Type:     nodeUpdated,
-		}, nil
+		return newUpdatedNode(node.Key, node.OldValue, node.NewValue), nil
 	case diff.Added:
-		return jsonNode{Key: node.Key, Type: nodeAdded, Value: new(node.NewValue)}, nil
+		return newValueNode(nodeAdded, node.Key, node.NewValue), nil
 	case diff.Deleted:
-		return jsonNode{Key: node.Key, Type: nodeRemoved, Value: new(node.OldValue)}, nil
+		return newValueNode(nodeRemoved, node.Key, node.OldValue), nil
 	case diff.Unchanged:
-		return jsonNode{Key: node.Key, Type: nodeUnchanged, Value: new(node.OldValue)}, nil
+		return newValueNode(nodeUnchanged, node.Key, node.OldValue), nil
 	default:
 		return jsonNode{}, fmt.Errorf("%w: %d", errUnknownChangeKind, node.Kind)
 	}
