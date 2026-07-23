@@ -102,10 +102,11 @@ bin/gendiff examples/before.yaml examples/after.yaml
 ```
 
 The same number reads equal in both formats. gendiff normalizes numbers to a
-common form when they load, so a JSON `50` matches a YAML `50`. Integers and
-floats are different, so `1` and `1.0` count as a change. Numbers that a config
-cannot represent exactly are rejected as a data error. This covers infinities,
-`NaN`, and values too large for a 64-bit type.
+common form when they load, so a JSON `50` matches a YAML `50`. Whole numbers
+become integers however they are written, so `1` and `1.0` are the same value,
+while fractions such as `1.5` stay floats. Numbers that a config cannot
+represent exactly are rejected as a data error. This covers infinities, `NaN`,
+and values too large for a 64-bit type.
 
 ## Exit codes
 
