@@ -26,7 +26,7 @@ const (
 func ParseFile(path string) (map[string]any, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("%q: %w: %w", path, ErrRead, errors.Unwrap(err))
+		return nil, fmt.Errorf("%w: %w", ErrRead, err)
 	}
 
 	fileType := strings.TrimPrefix(filepath.Ext(path), ".")

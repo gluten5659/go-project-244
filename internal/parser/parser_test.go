@@ -215,3 +215,17 @@ func TestParseFileReportsMissingFile(t *testing.T) {
 	require.ErrorIs(t, err, fs.ErrNotExist)
 	assert.Nil(t, values)
 }
+
+func TestParseFileKeepsTheFilesystemErrorInTheChain(t *testing.T) {
+	t.Parallel()
+
+	missingPath := filepath.Join(t.TempDir(), "missing.json")
+
+	_, err := parser.ParseFile(missingPath)
+
+	var pathError *fs.PathError
+
+	require.ErrorAs(t, err, &pathError)
+	assert.Equal(t, "open", pathError.Op)
+	assert.Equal(t, missingPath, pathError.Path)
+}
