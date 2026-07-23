@@ -44,7 +44,7 @@ func buildPlainPath(parentPath, key string) string {
 		return key
 	}
 
-	return parentPath + "." + key
+	return fmt.Sprintf("%s.%s", parentPath, key)
 }
 
 func formatPlainValue(value any) string {
