@@ -4,8 +4,6 @@ import (
 	"code/internal/diff"
 	"errors"
 	"fmt"
-	"maps"
-	"slices"
 	"strings"
 )
 
@@ -21,28 +19,21 @@ type Formatter interface {
 	Format(nodes []diff.Node) (string, error)
 }
 
-func registry() map[string]func() Formatter {
-	return map[string]func() Formatter{
-		Stylish: func() Formatter { return stylishFormatter{} },
-		Plain:   func() Formatter { return plainFormatter{} },
-		JSON:    func() Formatter { return jsonFormatter{} },
-	}
-}
-
 func New(name string) (Formatter, error) {
-	build, ok := registry()[name]
-	if !ok {
+	switch name {
+	case Stylish:
+		return NewStylish(), nil
+	case Plain:
+		return NewPlain(), nil
+	case JSON:
+		return NewJSON(), nil
+	default:
 		return nil, fmt.Errorf("%w: %q", ErrUnsupportedFormat, name)
 	}
-
-	return build(), nil
 }
 
-func SupportedNames() []string {
-	names := slices.Collect(maps.Keys(registry()))
-	slices.Sort(names)
-
-	return names
+func ListSupportedNames() []string {
+	return []string{JSON, Plain, Stylish}
 }
 
 func finalize(builder *strings.Builder) string {

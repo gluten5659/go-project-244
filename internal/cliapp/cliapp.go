@@ -28,6 +28,9 @@ const (
 func NewCommand() *cli.Command {
 	var firstFilePath, secondFilePath, format string
 
+	supportedFormats := formatters.ListSupportedNames()
+	listedFormats := strings.Join(supportedFormats, ", ")
+
 	return &cli.Command{
 		Name:  "gendiff",
 		Usage: "Compares two configuration files and shows a difference",
@@ -39,15 +42,14 @@ func NewCommand() *cli.Command {
 				Name:    "format",
 				Aliases: []string{"f"},
 				Value:   formatters.Stylish,
-				Usage:   "output format: " + strings.Join(formatters.SupportedNames(), ", "),
+				Usage:   "output format: " + listedFormats,
 				Validator: func(value string) error {
-					if slices.Contains(formatters.SupportedNames(), value) {
+					if slices.Contains(supportedFormats, value) {
 						return nil
 					}
 
 					return fmt.Errorf("%w (supported: %s)",
-						formatters.ErrUnsupportedFormat,
-						strings.Join(formatters.SupportedNames(), ", "))
+						formatters.ErrUnsupportedFormat, listedFormats)
 				},
 				Destination: &format,
 			},
@@ -75,7 +77,7 @@ func run(cmd *cli.Command, firstFilePath, secondFilePath, format string) error {
 
 	formatted, err := code.GenDiff(firstFilePath, secondFilePath, format)
 	if err != nil {
-		return cli.Exit(err, exitCodeFor(err))
+		return cli.Exit(err, resolveExitCode(err))
 	}
 
 	_, err = fmt.Fprintln(cmd.Writer, formatted)
@@ -86,7 +88,7 @@ func run(cmd *cli.Command, firstFilePath, secondFilePath, format string) error {
 	return nil
 }
 
-func exitCodeFor(err error) int {
+func resolveExitCode(err error) int {
 	switch {
 	case errors.Is(err, fs.ErrNotExist):
 		return exitNoInput

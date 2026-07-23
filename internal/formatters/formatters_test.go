@@ -17,12 +17,27 @@ func TestNewRejectsUnsupportedFormat(t *testing.T) {
 	assert.Nil(t, formatter)
 }
 
-func TestSupportedNames(t *testing.T) {
+func TestListSupportedNames(t *testing.T) {
 	t.Parallel()
 
 	assert.Equal(
 		t,
 		[]string{formatters.JSON, formatters.Plain, formatters.Stylish},
-		formatters.SupportedNames(),
+		formatters.ListSupportedNames(),
 	)
+}
+
+func TestNewBuildsEverySupportedName(t *testing.T) {
+	t.Parallel()
+
+	for _, name := range formatters.ListSupportedNames() {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			formatter, err := formatters.New(name)
+
+			require.NoError(t, err)
+			assert.NotNil(t, formatter)
+		})
+	}
 }

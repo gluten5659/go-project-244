@@ -39,6 +39,10 @@ type jsonNestedNode struct {
 
 type jsonFormatter struct{}
 
+func NewJSON() Formatter {
+	return jsonFormatter{}
+}
+
 func (jsonFormatter) Format(nodes []diff.Node) (string, error) {
 	encoded, err := json.MarshalIndent(jsonDiff{Diff: jsonNodes(nodes)}, "", "  ")
 	if err != nil {

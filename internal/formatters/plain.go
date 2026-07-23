@@ -8,6 +8,10 @@ import (
 
 type plainFormatter struct{}
 
+func NewPlain() Formatter {
+	return plainFormatter{}
+}
+
 func (plainFormatter) Format(nodes []diff.Node) (string, error) {
 	builder := strings.Builder{}
 	writePlain(&builder, nodes, "")
@@ -17,25 +21,25 @@ func (plainFormatter) Format(nodes []diff.Node) (string, error) {
 
 func writePlain(builder *strings.Builder, nodes []diff.Node, parentPath string) {
 	for _, node := range nodes {
-		path := plainPath(parentPath, node.Key)
+		path := buildPlainPath(parentPath, node.Key)
 
 		switch node.Kind {
 		case diff.Nested:
 			writePlain(builder, node.Children, path)
 		case diff.Updated:
 			fmt.Fprintf(builder, "Property '%s' was updated. From %s to %s\n",
-				path, plainValue(node.OldValue), plainValue(node.NewValue))
+				path, formatPlainValue(node.OldValue), formatPlainValue(node.NewValue))
 		case diff.Deleted:
 			fmt.Fprintf(builder, "Property '%s' was removed\n", path)
 		case diff.Added:
 			fmt.Fprintf(builder, "Property '%s' was added with value: %s\n",
-				path, plainValue(node.NewValue))
+				path, formatPlainValue(node.NewValue))
 		case diff.Unchanged:
 		}
 	}
 }
 
-func plainPath(parentPath, key string) string {
+func buildPlainPath(parentPath, key string) string {
 	if parentPath == "" {
 		return key
 	}
@@ -43,7 +47,7 @@ func plainPath(parentPath, key string) string {
 	return parentPath + "." + key
 }
 
-func plainValue(value any) string {
+func formatPlainValue(value any) string {
 	switch typed := value.(type) {
 	case map[string]any:
 		return "[complex value]"

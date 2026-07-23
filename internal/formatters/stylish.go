@@ -12,6 +12,10 @@ const indentUnit = "    "
 
 type stylishFormatter struct{}
 
+func NewStylish() Formatter {
+	return stylishFormatter{}
+}
+
 func (stylishFormatter) Format(nodes []diff.Node) (string, error) {
 	builder := strings.Builder{}
 	writeStylish(&builder, nodes, 0)
@@ -66,7 +70,7 @@ func writeStylishValue(builder *strings.Builder, value any, level int) {
 
 	fmt.Fprintln(builder, "{")
 
-	for _, key := range sortedObjectKeys(object) {
+	for _, key := range collectSortedObjectKeys(object) {
 		writeStylishKey(builder, level+1, " ", key)
 		writeStylishValue(builder, object[key], level+1)
 	}
@@ -74,7 +78,7 @@ func writeStylishValue(builder *strings.Builder, value any, level int) {
 	fmt.Fprintf(builder, "%s}\n", strings.Repeat(indentUnit, level+1))
 }
 
-func sortedObjectKeys(object map[string]any) []string {
+func collectSortedObjectKeys(object map[string]any) []string {
 	keys := slices.Collect(maps.Keys(object))
 	slices.Sort(keys)
 
